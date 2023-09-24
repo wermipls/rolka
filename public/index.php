@@ -367,7 +367,7 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
             }
     }
     if ($sticker) {
-        echo "<img class='msg_sticker msg_element' src='$sticker'></img>";
+        echo "<img class='msg_sticker msg_element' src='https://media.discordapp.net/stickers/{$sticker}?size=256'></img>";
     }
     echo "</div>";
     echo "</div>";

@@ -68,7 +68,7 @@ class Message:
     content: str | None
     date: datetime
     replies_to: int | None = None
-    sticker: str | None = None
+    sticker: int | None = None
     attachments: List[Attachment] | None = None
     embed: Embed | None = None
 
@@ -215,6 +215,7 @@ def parse_embed(chatmsg) -> Embed | None:
     return embed
 
 reply_id = re.compile(r"scrollToMessage\(event,'(\d+)'\)")
+re_sticker = re.compile(r'.+\/([\d]+)-[\w]+\.[\w]+')
 
 def parse_message(chatmsg, author_id) -> Message:
     msg_id = int(chatmsg.parent['data-message-id'])
@@ -234,7 +235,10 @@ def parse_message(chatmsg, author_id) -> Message:
 
     sticker = msg.find(class_='chatlog__sticker')
     if sticker:
-        sticker = sticker.img['src']
+        sticker = re_sticker.match(sticker.img['src'])
+        if not sticker:
+            raise ValueError('failed to match sticker id in url')
+        sticker = int(sticker.group(1))
 
     reply = msg.find(class_='chatlog__reference-link')
     if reply:
