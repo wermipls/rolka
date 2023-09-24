@@ -302,24 +302,7 @@ connection = mysql.connector.connect(
     passwd=args.p,
     database=args.db)
 
-query = """
-CREATE TABLE IF NOT EXISTS tp_authors (
-    uid BIGINT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    avatar_url VARCHAR(500),
-    utype INT
-);
-
-CREATE TABLE IF NOT EXISTS tp_channel_oldgeneral (
-    uid BIGINT NOT NULL PRIMARY KEY,
-    author_id BIGINT NOT NULL,
-    content TEXT
-    sticker TEXT
-);
-"""
-
 cursor = connection.cursor()
-cursor.execute(query, multi=True)
 
 query = f"""
 REPLACE INTO {args.t} (uid, author_id, date_sent, content, sticker, attachment, replies_to) 
