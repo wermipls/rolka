@@ -155,6 +155,12 @@ a, a:hover, a:visited, a:active {
     color: var(--color-accent);
 }
 
+.msg_emote {
+    height: 1.5rem;
+    max-width: 1.5rem;
+    vertical-align: top;
+}
+
 .msg_date_header {
     overflow: hidden;
     text-align: center;
@@ -203,7 +209,7 @@ class DiscordParser extends Parsedown
 {
     function __construct()
     {
-        $this->InlineTypes['<'] = ['Mention', 'SpecialCharacter'];
+        $this->InlineTypes['<'] = ['Mention', 'Emoticon', 'SpecialCharacter'];
 
         $this->inlineMarkerList .= '<';
     }
@@ -218,6 +224,23 @@ class DiscordParser extends Parsedown
                     'text' => "@" . $matches[1],
                     'attributes' => array(
                         'class' => 'msg_ping',
+                    ),
+                ),
+            );
+        }
+    }
+
+    protected function inlineEmoticon($excerpt)
+    {
+        if (preg_match('/^<:([\w]+):([\w ]+)>/', $excerpt['text'], $matches)) {
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'img',
+                    'attributes' => array(
+                        'alt', 'title' => $matches[1],
+                        'src' => 'https://cdn.discordapp.com/emojis/' . $matches[2],
+                        'class' => 'msg_emote',
                     ),
                 ),
             );

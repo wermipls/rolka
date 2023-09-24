@@ -122,6 +122,8 @@ def find_author(chatmsg) -> Author | None:
 
     return author
 
+re_emoji = re.compile(r'.+cdn.discordapp.com\/emojis\/([0-9]+).')
+
 def parse_markdown(content):
     # mentions
     for m in content.find_all(class_='chatlog__markdown-mention'):
@@ -130,9 +132,10 @@ def parse_markdown(content):
 
     # motes
     for e in content.find_all(class_='chatlog__emoji'):
-        if 'cdn.discordapp.com/emojis' in e['src']:
-            emote_tag = f':{e["title"]}:'
-            e.replace_with(emote_tag)
+        emote = re_emoji.match(e['src'])
+        if emote:
+            emote_tag = e["title"]
+            e.replace_with(f'<:{emote_tag}:{emote.group(1)}>')
         else:
             e.replace_with(e['alt'])
 
