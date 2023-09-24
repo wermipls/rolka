@@ -107,6 +107,7 @@ a, a:hover, a:visited, a:active {
 }
 
 .msg_attachment {
+    display: inline-block;
     max-height: 350px;
     max-width: 100%;
     border-radius: 8px;
@@ -188,6 +189,12 @@ a, a:hover, a:visited, a:active {
 .msg_date_header:after {
     left: 1em;
     margin-right: -50%;
+}
+
+a.msg_file {
+    display: inline-block;
+    padding: 12px;
+    font-weight: bold;
 }
 
 p {
@@ -355,13 +362,15 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
                     echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$url'></img></a>";
                     break;
                 case 'video':
-                    echo "<video class='msg_attachment msg_element' src='$url'></video>";
+                    echo "<video class='msg_attachment msg_element' src='$url' controls></video>";
                     break;
                 case 'audio':
-                    echo "<audio class='msg_attachment msg_element' src='$url'></audio>";
+                    echo "<audio class='msg_attachment msg_element' src='$url' controls></audio>";
                     break;
                 case 'file':
-                    echo "<div class='msg_attachment msg_element'><a href='$url'>Attachment: $url</a></div>";
+                    preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
+                    $fname = $matches[1];
+                    echo "<div class='msg_attachment msg_element'><a class='msg_file' href='$url'>File: $fname</a></div>";
                     break;
                 }
             }
