@@ -216,8 +216,12 @@ require __DIR__ . '/../vendor/autoload.php';
 
 class DiscordParser extends Parsedown
 {
-    function __construct()
+    private $author_names;
+
+    function __construct($author_names)
     {
+        $this->author_names = $author_names;
+
         $this->InlineTypes['<'] = ['Mention', 'Emoticon', 'SpecialCharacter'];
 
         $this->inlineMarkerList .= '<';
@@ -226,11 +230,12 @@ class DiscordParser extends Parsedown
     protected function inlineMention($excerpt)
     {
         if (preg_match('/^<@([\w ]+)>/', $excerpt['text'], $matches)) {
+            $name = $this->author_names[$matches[1]] ?? 'Unknown User';
             return array(
                 'extent' => strlen($matches[0]),
                 'element' => array(
                     'name' => 'span',
-                    'text' => "@" . $matches[1],
+                    'text' => "@" . $name,
                     'attributes' => array(
                         'class' => 'msg_ping',
                     ),
@@ -268,13 +273,23 @@ class DiscordParser extends Parsedown
     protected function inlineUrlTag($Excerpt) { return; }
 }
 
+function fetch_authors(PDO $db)
+{
+    $q = $db->query("SELECT uid, name FROM tp_authors");
+    $f = $q->fetchAll(PDO::FETCH_COLUMN | PDO::FETCH_UNIQUE);
+    return $f;
+}
+
 $config = include("../config.php");
-$parsedown = new DiscordParser();
-$parsedown->setSafeMode(true);
-$parsedown->setBreaksEnabled(true);
 
 $db = new PDO("mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4", $config['db_user'], $config['db_pass']);
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+$authors_by_id = fetch_authors($db);
+
+$parsedown = new DiscordParser($authors_by_id);
+$parsedown->setSafeMode(true);
+$parsedown->setBreaksEnabled(true);
 
 $select = $db->prepare(
     "SELECT ch.uid, author_id, date_sent, replies_to, content, sticker, attachment, tp_authors.name, tp_authors.avatar_url

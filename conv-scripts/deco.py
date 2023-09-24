@@ -261,6 +261,19 @@ def parse_message(chatmsg, author_id) -> Message:
 
     return message
 
+def mention_to_id(match, authors_by_name):
+    name = match.group(1)
+    if name in authors_by_name:
+        return f'<@{authors_by_name[name].uid}>'
+    else:
+        return f'<@{name}>'
+
+def resolve_mentions_to_id(content, authors_by_name):
+    return re.sub(
+        r'<@([\w ]+)>',
+        lambda match: mention_to_id(match, authors_by_name),
+        content)
+
 msgs = {}
 
 for msg in soup.find_all('div', class_='chatlog__message'):
@@ -293,6 +306,15 @@ for msg in soup.find_all('div', class_='chatlog__message'):
 for au in authors.items():
     print(au[1])
 
+authors_by_name = {}
+
+for key, a in authors.items():
+    authors_by_name[a.name] = a
+
+for key, msg in msgs.items():
+    if not msg.content:
+        continue
+    msg.content = resolve_mentions_to_id(msg.content, authors_by_name)
 
 # mysql sutff
 
