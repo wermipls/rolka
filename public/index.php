@@ -102,6 +102,7 @@ a, a:hover, a:visited, a:active {
 .msg_sticker {
     height: 192px;
     max-width: 192px;
+    object-fit: contain;
     border-radius: 8px;
     background-color: var(--color-bg-secondary);
 }
@@ -158,7 +159,8 @@ a, a:hover, a:visited, a:active {
 
 .msg_emote {
     height: 1.5rem;
-    max-width: 1.5rem;
+    width: 1.5rem;
+    object-fit: contain;
     vertical-align: top;
 }
 
@@ -245,7 +247,9 @@ class DiscordParser extends Parsedown
                 'element' => array(
                     'name' => 'img',
                     'attributes' => array(
-                        'alt', 'title' => $matches[1],
+                        'loading' => 'lazy',
+                        'alt' => $matches[1],
+                        'title' => $matches[1],
                         'src' => 'https://cdn.discordapp.com/emojis/' . $matches[2],
                         'class' => 'msg_emote',
                     ),
@@ -376,7 +380,7 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
             }
     }
     if ($sticker) {
-        echo "<img class='msg_sticker msg_element' src='https://media.discordapp.net/stickers/{$sticker}?size=256'></img>";
+        echo "<img loading='lazy' class='msg_sticker msg_element' src='https://media.discordapp.net/stickers/{$sticker}?size=256'></img>";
     }
     echo "</div>";
     echo "</div>";
