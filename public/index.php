@@ -229,7 +229,7 @@ class DiscordParser extends Parsedown
 
     protected function inlineMention($excerpt)
     {
-        if (preg_match('/^<@([\w ]+)>/', $excerpt['text'], $matches)) {
+        if (preg_match('/^<@(\d+)>/', $excerpt['text'], $matches)) {
             $name = $this->author_names[$matches[1]] ?? 'Unknown User';
             return array(
                 'extent' => strlen($matches[0]),
