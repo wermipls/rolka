@@ -4,8 +4,85 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f493960dbf3229f8998effb35c5e910d",
+    "content-hash": "2d31d4c2b45335aa6a1bf0b4939b1775",
     "packages": [
+        {
+            "name": "astrotomic/php-twemoji",
+            "version": "0.2.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Astrotomic/php-twemoji.git",
+                "reference": "911698de99507ce685a1a0cf9fb54430a7f7bafb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Astrotomic/php-twemoji/zipball/911698de99507ce685a1a0cf9fb54430a7f7bafb",
+                "reference": "911698de99507ce685a1a0cf9fb54430a7f7bafb",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "pestphp/pest": "^0.3.0",
+                "s9e/regexp-builder": "^1.4",
+                "spatie/emoji": "^2.3.0",
+                "spatie/pest-plugin-snapshots": "^1.0"
+            },
+            "suggest": {
+                "spatie/emoji": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Astrotomic\\Twemoji\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tom Witkowski",
+                    "email": "gummibeer@astrotomic.info",
+                    "homepage": "https://astrotomic.info",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Easily generate Twemoji URLs",
+            "homepage": "https://github.com/Astrotomic/php-twemoji",
+            "keywords": [
+                "emoji",
+                "twemoji",
+                "unicode"
+            ],
+            "support": {
+                "issues": "https://github.com/Astrotomic/php-twemoji/issues",
+                "source": "https://github.com/Astrotomic/php-twemoji/tree/0.2.4"
+            },
+            "funding": [
+                {
+                    "url": "https://forest.astrotomic.info",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/Gummibeer",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/SarahSibert",
+                    "type": "github"
+                },
+                {
+                    "url": "https://issuehunt.io/r/astrotomic",
+                    "type": "issuehunt"
+                }
+            ],
+            "time": "2023-02-23T11:01:15+00:00"
+        },
         {
             "name": "erusev/parsedown",
             "version": "1.7.4",

@@ -83,6 +83,10 @@ a, a:hover, a:visited, a:active {
     min-width: 0;
 }
 
+.msg_big {
+    font-size: 2em;
+}
+
 .msg_element {
     margin-bottom: 5px;
 }
@@ -158,8 +162,8 @@ a, a:hover, a:visited, a:active {
 }
 
 .msg_emote {
-    height: 1.5rem;
-    width: 1.5rem;
+    height: 1.5em;
+    width: 1.5em;
     object-fit: contain;
     vertical-align: top;
 }
@@ -291,6 +295,16 @@ $parsedown = new DiscordParser($authors_by_id);
 $parsedown->setSafeMode(true);
 $parsedown->setBreaksEnabled(true);
 
+use Astrotomic\Twemoji\EmojiText;
+class MyEmojiText extends EmojiText
+{
+    public function toTag(): string
+    {
+        return $this->replace(
+            "<img loading='lazy' class='msg_emote' src='%{src}' alt='%{alt}'>");
+    }
+}
+
 $select = $db->prepare(
     "SELECT ch.uid, author_id, date_sent, replies_to, content, sticker, attachment, tp_authors.name, tp_authors.avatar_url
      FROM {$config['channel_table']} ch
@@ -351,7 +365,9 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
                  WHERE ch.uid = $reply_id");
             $reply_to = $reply_to->fetch();
             $reply_content = $reply_to['content'];
-            $reply_content = strip_tags($parsedown->line($reply_content), '<img><br>');
+            $reply_content = $parsedown->line($reply_content);
+            $reply_content = (new MyEmojiText($reply_content))->toTag();
+            $reply_content = strip_tags($reply_content, '<img><br>');
             echo "<span class='msg_reply'> in response to </span><a class='msg_reply_ref' href='#$reply_id'><span class='msg_reply_user'>{$reply_to['name']} </span>";
             echo $dts;
             echo "<br><span class='msg_reply_content'>$reply_content</span></a>";
@@ -366,7 +382,12 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
     echo "<div class='msg_primary'>";
     if ($content) {
         $content = $parsedown->line($content);
-        echo "<div class='msg_content msg_element'>$content</div>";
+        $content = (new MyEmojiText($content))->toTag();
+        $big = '';
+        if (trim(strip_tags($content)) === '') {
+            $big = 'msg_big';
+        }
+        echo "<div class='msg_content msg_element $big'>$content</div>";
     }
     if ($attach_id) {
         foreach ($db->query(
