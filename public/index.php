@@ -351,10 +351,7 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
                  WHERE ch.uid = $reply_id");
             $reply_to = $reply_to->fetch();
             $reply_content = $reply_to['content'];
-            $reply_max = 120;
-            if (mb_strlen($reply_content) > $reply_max) {
-                $reply_content = mb_substr($reply_content, 0, $reply_max) . "...";
-            }
+            $reply_content = strip_tags($parsedown->line($reply_content), '<img><br>');
             echo "<span class='msg_reply'> in response to </span><a class='msg_reply_ref' href='#$reply_id'><span class='msg_reply_user'>{$reply_to['name']} </span>";
             echo $dts;
             echo "<br><span class='msg_reply_content'>$reply_content</span></a>";
