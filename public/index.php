@@ -284,10 +284,20 @@ function fetch_authors(PDO $db)
     return $f;
 }
 
+function channel_table_from_id($config, $id): string
+{
+    return $config['channel_tables'][$id] ?? current($config['channel_tables']);
+}
+
 $config = include("../config.php");
 
-$db = new PDO("mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4", $config['db_user'], $config['db_pass']);
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db_opts = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+];
+
+$db = new PDO(
+    "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
+    $config['db_user'], $config['db_pass'], $db_opts);
 
 $authors_by_id = fetch_authors($db);
 
@@ -304,10 +314,13 @@ class MyEmojiText extends EmojiText
             "<img loading='lazy' class='msg_emote' src='%{src}' alt='%{alt}'>");
     }
 }
+$channel_table = channel_table_from_id(
+    $config,
+    filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT));
 
 $select = $db->prepare(
     "SELECT ch.uid, author_id, date_sent, replies_to, content, sticker, attachment, tp_authors.name, tp_authors.avatar_url
-     FROM {$config['channel_table']} ch
+     FROM `{$channel_table}` ch
      INNER JOIN tp_authors
      ON ch.author_id = tp_authors.uid
      ORDER BY ch.uid ASC;");
@@ -358,13 +371,15 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
         $dts = "<span class='msg_date'>on {$datetime->format('d.m.Y')}</span>";
 
         if ($reply_id) {
-            $reply_to = $db->query(
-                "SELECT ch.content, a.name FROM {$config['channel_table']} ch
+            $reply_to = $db->prepare(
+                "SELECT ch.content, a.name FROM `{$channel_table}` ch
                  INNER JOIN tp_authors a
                  ON ch.author_id = a.uid
-                 WHERE ch.uid = $reply_id");
+                 WHERE ch.uid = :reply_id");
+            $reply_to->bindParam(':reply_id', $reply_id, PDO::PARAM_INT);
+            $reply_to->execute();
             $reply_to = $reply_to->fetch();
-            $reply_content = $reply_to['content'];
+            $reply_content = $reply_to['content'] ?? '';
             $reply_content = $parsedown->line($reply_content);
             $reply_content = (new MyEmojiText($reply_content))->toTag();
             $reply_content = strip_tags($reply_content, '<img><br>');
@@ -390,27 +405,29 @@ while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
         echo "<div class='msg_content msg_element $big'>$content</div>";
     }
     if ($attach_id) {
-        foreach ($db->query(
-            "SELECT type, url FROM tp_attachments WHERE id = $attach_id")
-            as $att) {
-                $url = htmlspecialchars($att['url']);
-                switch ($att['type']) {
-                case 'image':
-                    echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$url'></img></a>";
-                    break;
-                case 'video':
-                    echo "<video class='msg_attachment msg_element' src='$url' controls></video>";
-                    break;
-                case 'audio':
-                    echo "<audio class='msg_attachment msg_element' src='$url' controls></audio>";
-                    break;
-                case 'file':
-                    preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
-                    $fname = $matches[1];
-                    echo "<div class='msg_attachment msg_element'><a class='msg_file' href='$url'>File: $fname</a></div>";
-                    break;
-                }
+        $att_query = $db->prepare(
+            "SELECT type, url FROM tp_attachments WHERE id = :id");
+        $att_query->bindParam(':id', $attach_id, PDO::PARAM_INT);
+        $att_query->execute();
+        while ($att = $att_query->fetch()) {
+            $url = htmlspecialchars($att['url']);
+            switch ($att['type']) {
+            case 'image':
+                echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$url'></img></a>";
+                break;
+            case 'video':
+                echo "<video class='msg_attachment msg_element' src='$url' controls></video>";
+                break;
+            case 'audio':
+                echo "<audio class='msg_attachment msg_element' src='$url' controls></audio>";
+                break;
+            case 'file':
+                preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
+                $fname = $matches[1];
+                echo "<div class='msg_attachment msg_element'><a class='msg_file' href='$url'>File: $fname</a></div>";
+                break;
             }
+        }
     }
     if ($sticker) {
         echo "<img loading='lazy' class='msg_sticker msg_element' src='https://media.discordapp.net/stickers/{$sticker}?size=256'></img>";
