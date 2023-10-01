@@ -218,64 +218,13 @@ $start = microtime(true);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-class DiscordParser extends Parsedown
-{
-    private $author_names;
-
-    function __construct($author_names)
-    {
-        $this->author_names = $author_names;
-
-        $this->InlineTypes['<'] = ['Mention', 'Emoticon', 'SpecialCharacter'];
-
-        $this->inlineMarkerList .= '<';
-    }
-
-    protected function inlineMention($excerpt)
-    {
-        if (preg_match('/^<@(\d+)>/', $excerpt['text'], $matches)) {
-            $name = $this->author_names[$matches[1]] ?? 'Unknown User';
-            return array(
-                'extent' => strlen($matches[0]),
-                'element' => array(
-                    'name' => 'span',
-                    'text' => "@" . $name,
-                    'attributes' => array(
-                        'class' => 'msg_ping',
-                    ),
-                ),
-            );
-        }
-    }
-
-    protected function inlineEmoticon($excerpt)
-    {
-        if (preg_match('/^<:([\w]+):([\w ]+)>/', $excerpt['text'], $matches)) {
-            return array(
-                'extent' => strlen($matches[0]),
-                'element' => array(
-                    'name' => 'img',
-                    'attributes' => array(
-                        'loading' => 'lazy',
-                        'alt' => $matches[1],
-                        'title' => $matches[1],
-                        'src' => 'https://cdn.discordapp.com/emojis/' . $matches[2],
-                        'class' => 'msg_emote',
-                    ),
-                ),
-            );
-        }
-    }
-
-    protected $safeLinksWhitelist = array(
-        'http://',
-        'https://',
-    );
-
-    protected function inlineEmailTag($Excerpt) { return; }
-    protected function inlineImage($Excerpt) { return; }
-    protected function inlineUrlTag($Excerpt) { return; }
-}
+use rolka\ {
+    Message,
+    MessageParser,
+    MessageRenderer,
+    Author,
+    Attachment
+};
 
 function fetch_authors(PDO $db)
 {
@@ -301,19 +250,9 @@ $db = new PDO(
 
 $authors_by_id = fetch_authors($db);
 
-$parsedown = new DiscordParser($authors_by_id);
-$parsedown->setSafeMode(true);
-$parsedown->setBreaksEnabled(true);
+$parser = new MessageParser($authors_by_id);
+$renderer = new MessageRenderer($parser);
 
-use Astrotomic\Twemoji\EmojiText;
-class MyEmojiText extends EmojiText
-{
-    public function toTag(): string
-    {
-        return $this->replace(
-            "<img loading='lazy' class='msg_emote' src='%{src}' alt='%{alt}'>");
-    }
-}
 $channel_table = channel_table_from_id(
     $config,
     filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT));
@@ -326,114 +265,59 @@ $select = $db->prepare(
      ORDER BY ch.uid ASC;");
 $select->execute();
 
-$last_uid = 0;
-$last_date = NULL;
-
 while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
-    $msg_id = $row['uid'];
-    $user = $row['name'];
-    $content = $row['content'];
-    $sticker = $row['sticker'];
-    $avi_url = $row['avatar_url'];
-    $attach_id = $row['attachment'];
-    $reply_id = $row['replies_to'];
-    $datetime = new DateTimeImmutable($row['date_sent']);
-    if ($last_date === NULL) {
-        $last_date = $datetime;
-    }
-    $date_delta = $datetime->diff($last_date);
-    $print_date_header = ($datetime->setTime(0, 0)->diff($last_date->setTime(0, 0))->d > 0);
-    $last_date = $datetime;
+    $attachments = [];
 
-    $show_author = false;
-    if ($last_uid != $row['author_id']) {
-        $last_uid = $row['author_id'];
-        $show_author = true;
-    }
-    if ($reply_id) {
-        $show_author = true;
-    }
-
-    if ($date_delta->i > 10) {
-        $show_author = true;
-    }
-
-    if ($print_date_header) {
-        $show_author = true;
-        $dh = $datetime->format('l, j F Y');
-        echo "<div class='msg_date_header'>$dh</div>";
-    }
-
-    echo "<div class='msg' id='$msg_id'>";
-    if ($show_author) {
-        echo "<div class='msg_side'><img class='msg_avi' src='$avi_url'></img></div>";
-        echo "<div class='msg_header'><span class='msg_user'>$user </span>";
-        $dts = "<span class='msg_date'>on {$datetime->format('d.m.Y')}</span>";
-
-        if ($reply_id) {
-            $reply_to = $db->prepare(
-                "SELECT ch.content, a.name FROM `{$channel_table}` ch
-                 INNER JOIN tp_authors a
-                 ON ch.author_id = a.uid
-                 WHERE ch.uid = :reply_id");
-            $reply_to->bindParam(':reply_id', $reply_id, PDO::PARAM_INT);
-            $reply_to->execute();
-            $reply_to = $reply_to->fetch();
-            $reply_content = $reply_to['content'] ?? '';
-            $reply_content = $parsedown->line($reply_content);
-            $reply_content = (new MyEmojiText($reply_content))->toTag();
-            $reply_content = strip_tags($reply_content, '<img><br>');
-            echo "<span class='msg_reply'> in response to </span><a class='msg_reply_ref' href='#$reply_id'><span class='msg_reply_user'>{$reply_to['name']} </span>";
-            echo $dts;
-            echo "<br><span class='msg_reply_content'>$reply_content</span></a>";
-        } else {
-            echo $dts;
-        }
-        echo "</div>";
-    }
-    $time = $datetime->format('H:i');
-    echo "<div class='msg_side'><div class='msg_time'>$time</div></div>";
-
-    echo "<div class='msg_primary'>";
-    if ($content) {
-        $content = $parsedown->line($content);
-        $content = (new MyEmojiText($content))->toTag();
-        $big = '';
-        if (trim(strip_tags($content)) === '') {
-            $big = 'msg_big';
-        }
-        echo "<div class='msg_content msg_element $big'>$content</div>";
-    }
-    if ($attach_id) {
+    if ($row['attachment']) {
         $att_query = $db->prepare(
             "SELECT type, url FROM tp_attachments WHERE id = :id");
-        $att_query->bindParam(':id', $attach_id, PDO::PARAM_INT);
+        $att_query->bindParam(':id', $row['attachment'], PDO::PARAM_INT);
         $att_query->execute();
-        while ($att = $att_query->fetch()) {
-            $url = htmlspecialchars($att['url']);
-            switch ($att['type']) {
-            case 'image':
-                echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$url'></img></a>";
-                break;
-            case 'video':
-                echo "<video class='msg_attachment msg_element' src='$url' controls></video>";
-                break;
-            case 'audio':
-                echo "<audio class='msg_attachment msg_element' src='$url' controls></audio>";
-                break;
-            case 'file':
-                preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
-                $fname = $matches[1];
-                echo "<div class='msg_attachment msg_element'><a class='msg_file' href='$url'>File: $fname</a></div>";
-                break;
-            }
+        while ($aq = $att_query->fetch()) {
+            $a = new Attachment(
+                $row['attachment'],
+                $aq['type'],
+                $aq['url']
+            );
+            array_push($attachments, $a);
         }
     }
-    if ($sticker) {
-        echo "<img loading='lazy' class='msg_sticker msg_element' src='https://media.discordapp.net/stickers/{$sticker}?size=256'></img>";
+    $reply = null;
+    if ($row['replies_to']) {
+        $reply_to = $db->prepare(
+            "SELECT ch.content, a.name FROM `{$channel_table}` ch
+             INNER JOIN tp_authors a
+             ON ch.author_id = a.uid
+             WHERE ch.uid = :reply_id");
+        $reply_to->bindParam(':reply_id', $row['replies_to'], PDO::PARAM_INT);
+        $reply_to->execute();
+        $reply_to = $reply_to->fetch();
+        $reply_author = new Author(0, $reply_to['name'], '');
+        $reply = new Message(
+            $row['replies_to'],
+            $reply_author,
+            new DateTimeImmutable(), 
+            $reply_to['content'],
+            null,
+            null,
+            null
+        );
     }
-    echo "</div>";
-    echo "</div>";
+    $author = new Author(
+        $row['author_id'],
+        $row['name'],
+        $row['avatar_url']);
+    $msg = new Message(
+        $row['uid'],
+        $author,
+        new DateTimeImmutable($row['date_sent']),
+        $row['content'],
+        $reply,
+        $row['sticker'],
+        $attachments
+    );
+
+    $renderer->draw($msg);
 }
 ?>
 </body>

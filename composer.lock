@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d31d4c2b45335aa6a1bf0b4939b1775",
+    "content-hash": "17b6d78337e33583cb01d2ddac3ec0d7",
     "packages": [
         {
             "name": "astrotomic/php-twemoji",
-            "version": "0.2.4",
+            "version": "dev-fast-regexp",
             "source": {
                 "type": "git",
-                "url": "https://github.com/Astrotomic/php-twemoji.git",
-                "reference": "911698de99507ce685a1a0cf9fb54430a7f7bafb"
+                "url": "https://github.com/wermipls/php-twemoji.git",
+                "reference": "5d2bef73cdbe6b540e4bfa78896be9710e47c9bb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Astrotomic/php-twemoji/zipball/911698de99507ce685a1a0cf9fb54430a7f7bafb",
-                "reference": "911698de99507ce685a1a0cf9fb54430a7f7bafb",
+                "url": "https://api.github.com/repos/wermipls/php-twemoji/zipball/5d2bef73cdbe6b540e4bfa78896be9710e47c9bb",
+                "reference": "5d2bef73cdbe6b540e4bfa78896be9710e47c9bb",
                 "shasum": ""
             },
             "require": {
@@ -40,7 +40,14 @@
                     "Astrotomic\\Twemoji\\": "src"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "scripts": {
+                "generate": [
+                    "php ./generate.php"
+                ],
+                "test": [
+                    "vendor/bin/pest"
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -60,28 +67,9 @@
                 "unicode"
             ],
             "support": {
-                "issues": "https://github.com/Astrotomic/php-twemoji/issues",
-                "source": "https://github.com/Astrotomic/php-twemoji/tree/0.2.4"
+                "source": "https://github.com/wermipls/php-twemoji/tree/fast-regexp"
             },
-            "funding": [
-                {
-                    "url": "https://forest.astrotomic.info",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/Gummibeer",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/SarahSibert",
-                    "type": "github"
-                },
-                {
-                    "url": "https://issuehunt.io/r/astrotomic",
-                    "type": "issuehunt"
-                }
-            ],
-            "time": "2023-02-23T11:01:15+00:00"
+            "time": "2023-09-30T08:02:31+00:00"
         },
         {
             "name": "erusev/parsedown",
@@ -137,7 +125,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "astrotomic/php-twemoji": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],

@@ -1,6 +1,17 @@
 {
+    "name": "wermi/rolka",
+    "description": "read-only chatlog dump",
     "require": {
         "erusev/parsedown": "^1.7",
-        "astrotomic/php-twemoji": "^0.2.4"
+        "astrotomic/php-twemoji": "dev-fast-regexp"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/wermipls/php-twemoji.git"
+        }
+    ],
+    "autoload": {
+        "psr-4": { "rolka\\": "src/" }
     }
 }
