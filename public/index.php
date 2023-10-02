@@ -49,13 +49,19 @@ $channel_name = channel_table_from_id(
     $config,
     filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT));
 
+$origin_id = filter_input(INPUT_GET, 'from', FILTER_VALIDATE_INT);
+if (!$origin_id) {
+    $origin_id = 0;
+}
+
 $channel = new Channel($db, $channel_name);
 $parser = new MessageParser($authors_by_id);
 $renderer = new MessageRenderer($parser, $channel);
 
-foreach ($channel->fetchMessages(0, 0) as $msg) {
+foreach ($channel->fetchMessages($origin_id, 250) as $msg) {
     $renderer->draw($msg);
 }
+$renderer->finish();
 ?>
 </body>
 </html>

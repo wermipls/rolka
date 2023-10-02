@@ -156,4 +156,20 @@ class MessageRenderer
 
     $this->prev_msg = $msg;
     }
+
+    private function drawNextButton(int $id)
+    {
+        echo "<a class='nav_pagebtn' href='/?from={$id}'>Next page</a>";
+    }
+    public function finish()
+    {
+        if (!$this->prev_msg) {
+            return; // nothing to finalize
+        }
+        if ($this->channel->isLastMessage($this->prev_msg->id)) {
+            return;
+        }
+
+        $this->drawNextButton($this->prev_msg->id);
+    }
 }

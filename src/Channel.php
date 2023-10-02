@@ -42,7 +42,7 @@ class Channel
         );
 
         return new Message(
-            $row['uid'],
+            $row['uid'][0],
             $author,
             new \DateTimeImmutable($row['date_sent']),
             $row['content'],
@@ -61,7 +61,7 @@ class Channel
              WHERE ch.uid = :id");
         $s->bindParam(':id', $id, PDO::PARAM_INT);
         $s->execute();
-        $row = $s->fetch();
+        $row = $s->fetch(PDO::FETCH_NAMED);
         if (!$row) {
             return null;
         }
@@ -72,21 +72,31 @@ class Channel
     public function fetchMessages(int $last_id, int $limit = 0): \Generator
     {
         $select = $this->db->prepare(
-            "SELECT *
+            "SELECT ch.*, a.*
              FROM `{$this->channel}` ch
-             INNER JOIN tp_authors
-             ON ch.author_id = tp_authors.uid
+             INNER JOIN tp_authors a
+             ON ch.author_id = a.uid
              WHERE ch.uid > :last_id
              ORDER BY ch.uid ASC "
-             . ($limit ? 'LIMIT :limit' : ''));
+             . ($limit ? 'LIMIT :limit' : '')
+            );
         $select->bindParam(':last_id', $last_id, PDO::PARAM_INT);
         if ($limit) {
             $select->bindParam(':limit', $limit, PDO::PARAM_INT);
         }
         $select->execute();
 
-        while ($row = $select->fetch(PDO::FETCH_ASSOC)) {
+        while ($row = $select->fetch(PDO::FETCH_NAMED)) {
             yield $this->mapMessage($row);
         }
+    }
+
+    public function isLastMessage(int $id): bool
+    {
+        $s = $this->db->query(
+            "SELECT uid FROM {$this->channel} ORDER BY uid DESC LIMIT 1"
+        );
+        $row = $s->fetch();
+        return $row['uid'] == $id;
     }
 }

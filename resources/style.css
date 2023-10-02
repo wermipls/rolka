@@ -198,6 +198,16 @@ a.msg_file {
     font-weight: bold;
 }
 
+a.nav_pagebtn {
+    display: block;
+    padding: 12px;
+    font-weight: bold;
+    background-color: var(--color-bg-secondary);
+    text-align: center;
+    margin-top: 12px;
+    border-radius: 8px;
+}
+
 p {
     display: block;
     margin: 0;
