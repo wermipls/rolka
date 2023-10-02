@@ -10,9 +10,9 @@ class Message
         public Author $author,
         public DateTimeImmutable $date,
         public ?string $content,
-        public ?Message $replies_to,
+        public ?int $replies_to,
         public ?string $sticker,
-        public ?Array $attachments,
+        public ?int $attachment,
     ) {
     }
 }

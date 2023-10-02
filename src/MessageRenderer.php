@@ -9,7 +9,8 @@ class MessageRenderer
     private ?Message $prev_msg = null;
 
     public function __construct(
-        private MessageParser $parser
+        private MessageParser $parser,
+        private Channel $channel
     ) {
     }
 
@@ -21,7 +22,7 @@ class MessageRenderer
     private function parseReply(Message $msg): string
     {
         return strip_tags(
-            $this->parse($msg->replies_to),
+            $this->parse($this->channel->fetchMessage($msg->replies_to)),
             "<img><br>"
         );
     }
@@ -42,9 +43,10 @@ class MessageRenderer
 <div class='msg_header'>
     <span class='msg_user'><?php echo $msg->author->name ?> </span>
     <?php if ($msg->replies_to): ?>
+        <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
         <span class='msg_reply'> in response to </span>
-        <a class='msg_reply_ref' href='#<?php echo $msg->replies_to->id ?>'>
-            <span class='msg_reply_user'> <?php echo $msg->replies_to->author->name ?> </span>
+        <a class='msg_reply_ref' href='#<?php echo $replies_to->id ?>'>
+            <span class='msg_reply_user'> <?php echo $replies_to->author->name ?> </span>
             <?php echo $dts ?>
             <br>
             <span class='msg_reply_content'><?php echo $this->parseReply($msg) ?></span>
@@ -80,7 +82,7 @@ class MessageRenderer
 
     private function drawAttachments(Message $msg)
     {
-        foreach ($msg->attachments as $a) {
+        foreach ($this->channel->fetchAttachments($msg) as $a) {
             $this->drawAttachment($a);
         }
     }
