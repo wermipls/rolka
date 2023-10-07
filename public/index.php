@@ -23,7 +23,10 @@ use rolka\ {
 
 function fetch_authors(PDO $db)
 {
-    $q = $db->query("SELECT uid, name FROM tp_authors");
+    $q = $db->query(
+        "SELECT a.id, a.display_name, assets.url FROM authors a
+         LEFT JOIN assets
+         ON a.avatar_asset = assets.url");
     $f = $q->fetchAll(PDO::FETCH_COLUMN | PDO::FETCH_UNIQUE);
     return $f;
 }

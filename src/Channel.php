@@ -5,21 +5,24 @@ use PDO;
 
 class Channel
 {
-    private static string $table_prefix = 'tp_channel_';
+    private static string $table_prefix = 'ch_';
     private string $channel;
 
     public function __construct(
         private PDO $db,
         string $channel
     ) {
-        $this->channel = static::$table_prefix . $channel;
+        $this->channel = static::$table_prefix . $channel . '_messages';
     }
 
     public function fetchAttachments(Message $msg): \Generator
     {
         if ($msg->attachment) {
             $att_query = $this->db->prepare(
-                "SELECT type, url FROM tp_attachments WHERE id = :id");
+                "SELECT `type`, `url` FROM `attachments` `att`
+                 INNER JOIN `assets` `a`
+                 ON `a`.`id` = `att`.`asset_id`
+                 WHERE `att`.`group_id` = :id");
             $att_query->bindParam(':id', $msg->attachment, PDO::PARAM_INT);
             $att_query->execute();
             while ($aq = $att_query->fetch()) {
@@ -37,18 +40,18 @@ class Channel
     {
         $author = new Author(
             $row['author_id'],
-            $row['name'],
-            $row['avatar_url']
+            $row['display_name'],
+            $row['url']
         );
 
         return new Message(
-            $row['uid'][0],
+            $row['id'][0],
             $author,
-            new \DateTimeImmutable($row['date_sent']),
+            new \DateTimeImmutable($row['sent']),
             $row['content'],
             $row['replies_to'],
             $row['sticker'],
-            $row['attachment']
+            $row['attachment_group']
         );
     }
 
@@ -56,9 +59,11 @@ class Channel
     {
         $s = $this->db->prepare(
             "SELECT * FROM `{$this->channel}` ch
-             INNER JOIN tp_authors a
-             ON ch.author_id = a.uid
-             WHERE ch.uid = :id");
+             INNER JOIN authors a
+             ON ch.author_id = a.id
+             LEFT JOIN assets
+             ON a.avatar_asset = assets.id
+             WHERE ch.id = :id");
         $s->bindParam(':id', $id, PDO::PARAM_INT);
         $s->execute();
         $row = $s->fetch(PDO::FETCH_NAMED);
@@ -72,12 +77,14 @@ class Channel
     public function fetchMessages(int $last_id, int $limit = 0): \Generator
     {
         $select = $this->db->prepare(
-            "SELECT ch.*, a.*
+            "SELECT ch.*, a.*, assets.url
              FROM `{$this->channel}` ch
-             INNER JOIN tp_authors a
-             ON ch.author_id = a.uid
-             WHERE ch.uid > :last_id
-             ORDER BY ch.uid ASC "
+             INNER JOIN authors a
+             ON ch.author_id = a.id
+             LEFT JOIN assets
+             ON a.avatar_asset = assets.id 
+             WHERE ch.id > :last_id
+             ORDER BY ch.id ASC "
              . ($limit ? 'LIMIT :limit' : '')
             );
         $select->bindParam(':last_id', $last_id, PDO::PARAM_INT);
@@ -94,9 +101,9 @@ class Channel
     public function isLastMessage(int $id): bool
     {
         $s = $this->db->query(
-            "SELECT uid FROM {$this->channel} ORDER BY uid DESC LIMIT 1"
+            "SELECT id FROM {$this->channel} ORDER BY id DESC LIMIT 1"
         );
         $row = $s->fetch();
-        return $row['uid'] == $id;
+        return $row['id'] == $id;
     }
 }

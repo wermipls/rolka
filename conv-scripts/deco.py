@@ -1,13 +1,17 @@
 import argparse
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import StrEnum
 from datetime import datetime
 from dateutil import parser as dateparser
 from typing import List
 import re
 import mysql.connector
 import traceback
+import xxhash
+import os
+from urllib import parse as urlparse
+import shutil
 
 parser = argparse.ArgumentParser()
 parser.add_argument("input")
@@ -16,6 +20,7 @@ parser.add_argument("-u", required=True)
 parser.add_argument("-p", required=True)
 parser.add_argument("-db", required=True)
 parser.add_argument("-t", required=True)
+parser.add_argument("-assetdir")
 
 args = parser.parse_args()
 
@@ -23,16 +28,18 @@ f = open(args.input, "r")
 html_doc = f.read()
 f.close()
 
+basedir = os.path.dirname(args.input)
+
 soup = BeautifulSoup(html_doc, 'html.parser')
 
 authors = { }
 
 author_id = 0
 
-class UserType(IntEnum):
-    NORMAL = 1
-    WEBHOOK = 2
-    BOT = 3
+class UserType(StrEnum):
+    NORMAL = "user"
+    WEBHOOK = "webhook"
+    BOT = "bot"
 
 @dataclass
 class Author:
@@ -44,10 +51,42 @@ class Author:
     def __repr__(self):
         return f'[{self.uid}] [{self.user_type}] {self.name}'
 
-@dataclass
-class Attachment:
-    attach_type: str
+class Asset:
+    _type: str
     url: str
+    og_name: str
+    size: int
+    xxh128: str
+
+    def __init__(self, path, _type, og_name = None):
+        path = urlparse.unquote(path)
+        self.url = path
+        if (og_name):
+            self.og_name = og_name
+        else:
+            self.og_name = self.extract_og_url(os.path.basename(path))
+
+        self._type = _type
+        path = os.path.join(basedir, path)
+        self.size = os.path.getsize(path)
+        f = open(path, 'rb')
+        self.xxh128 = xxhash.xxh128(f.read()).hexdigest()
+        f.close()
+
+    def extract_og_url(self, url) -> str:
+        m = re.match(r'^(.*)-[A-z0-9]{5}(.*)$', url)
+        if m:
+            return m.group(1) + m.group(2)
+        else:
+            return url
+
+    def convert_copy(self, target_dir, prefix):
+        new_dir = os.path.join(target_dir, prefix, self.og_name)
+        new_url = os.path.join("assets", prefix, self.og_name)
+        b = os.path.dirname(new_dir)
+        os.makedirs(b, exist_ok=True)
+        shutil.copy2(os.path.join(basedir, self.url), new_dir)
+        self.url = new_url
 
 @dataclass
 class Embed:
@@ -57,6 +96,7 @@ class Embed:
     title_url: str | None = None
     description: str | None = None
     special_container_url: str | None = None
+    asset: Asset | None = None
 
     def __repr__(self):
         return f"        {self.author}\n        {self.title}\n        {self.description}"
@@ -69,8 +109,8 @@ class Message:
     date: datetime
     replies_to: int | None = None
     sticker: int | None = None
-    attachments: List[Attachment] | None = None
-    embed: Embed | None = None
+    attachments: List[Asset] | None = None
+    embed: List[Embed] | None = None
 
 def parse_datetime(dt: str | None) -> datetime:
     if not dt:
@@ -157,9 +197,9 @@ def parse_markdown(content):
 
     content.smooth()
 
-    return content.string
+    return str(content.string)
 
-def parse_attachments(chatmsg) -> List[Attachment] | None:
+def parse_attachments(chatmsg) -> List[Asset] | None:
     attachments = []
 
     for a in chatmsg.find_all(class_='chatlog__attachment'):
@@ -169,13 +209,13 @@ def parse_attachments(chatmsg) -> List[Attachment] | None:
 
         if media.name == 'img':
             attachments.append(
-                Attachment('image', media['src']))
+                Asset(media['src'], 'image'))
         if media.name == 'video':
             attachments.append(
-                Attachment('video', media.source['src']))
+                Asset('video', media.source['src']))
         if media.name == 'audio':
             attachments.append(
-                Attachment('audio', media.source['src']))
+                Asset('audio', media.source['src']))
 
     if len(attachments) > 0:
         return attachments
@@ -191,16 +231,16 @@ def parse_embed(chatmsg) -> Embed | None:
     
     url = e.find(class_='chatlog__embed-author-link')
     if url:
-        embed.author_url = url['href']
+        embed.author_url = str(url['href'])
 
     author = e.find(class_='chatlog__embed-author')
     if author:
-        embed.author = author.string
+        embed.author = str(author.string)
     
     title = e.find(class_='chatlog__embed-title')
     if title:
         if title.a:
-            embed.title_url = title.a['href']
+            embed.title_url = str(title.a['href'])
         content = title.find(class_='chatlog__markdown-preserve')
         if content:
             embed.title = parse_markdown(content)
@@ -256,7 +296,7 @@ def parse_message(chatmsg, author_id) -> Message:
         timestamp,
         sticker=sticker,
         attachments=attachments,
-        embed=embed,
+        embed=[embed] if embed else None,
         replies_to=reply)
 
     return message
@@ -273,6 +313,16 @@ def resolve_mentions_to_id(content, authors_by_name):
         r'<@([\w ]+)>',
         lambda match: mention_to_id(match, authors_by_name),
         content)
+
+def insert_asset(cursor, a, prefix):
+    if args.assetdir:
+        a.convert_copy(args.assetdir, prefix)
+        cursor.execute("""
+            INSERT INTO assets (type, og_name, url, hash, size)
+            VALUES (%s, %s, %s, %s, %s)""",
+            [a._type, a.og_name, a.url, a.xxh128, a.size]
+        )
+        return cursor.lastrowid
 
 msgs = {}
 
@@ -296,7 +346,7 @@ for msg in soup.find_all('div', class_='chatlog__message'):
     if m.attachments:
         attachtypes = []
         for a in m.attachments:
-            attachtypes.append(a.attach_type)
+            attachtypes.append(a._type)
 
         print('Attachments: ' + ', '.join(attachtypes))
 
@@ -322,13 +372,15 @@ connection = mysql.connector.connect(
     host=args.host,
     user=args.u,
     passwd=args.p,
-    database=args.db)
+    database=args.db,
+    charset="utf8mb4")
 
 cursor = connection.cursor()
 
 query = f"""
-REPLACE INTO {args.t} (uid, author_id, date_sent, content, sticker, attachment, replies_to) 
-VALUES (%s, %s, %s, %s, %s, %s, %s);
+REPLACE INTO {args.t} 
+(id, author_id, sent, modified, replies_to, content, sticker, attachment_group, embed_group) 
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
 """
 vals = []
 
@@ -339,21 +391,26 @@ for m in msgs.items():
     msg.replies_to = str(msg.replies_to) if msg.replies_to else None
     attachment_id = None
     if msg.attachments:
-        cursor.execute("SELECT MAX(id) FROM tp_attachments")
-        last_id = cursor.fetchone()
-        last_id = int(last_id[0]) if last_id else 1
-
-        attachment_id = last_id + 1
-
+        cursor.execute("INSERT INTO attachment_groups (id) VALUES (NULL)")
+        attachment_id = cursor.lastrowid
         for a in msg.attachments:
-            cursor.execute(
-                "INSERT INTO tp_attachments (id, type, url) VALUES (%s, %s, %s)",
-                [attachment_id, a.attach_type, a.url]
-            )
+            asset_id = insert_asset(cursor, a, str(attachment_id))
+            cursor.execute("INSERT INTO attachments (group_id, asset_id) VALUES (%s, %s)",
+                [attachment_id, asset_id])
 
-    val = (msg.uid, msg.author_id, 
-        msg.date.strftime('%Y-%m-%d %H:%M:%S'),
-        msg.content, msg.sticker, attachment_id, msg.replies_to)
+    embed_id = None
+    if msg.embed:
+        cursor.execute("INSERT INTO embed_groups (id) VALUES (NULL)")
+        embed_id = cursor.lastrowid
+        for e in msg.embed:
+            cursor.execute("""
+                INSERT INTO embeds (group_id, author, author_url, title, title_url, description, special_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                [embed_id, e.author, e.author_url, e.title, e.title_url, e.description, e.special_container_url])
+
+    val = (msg.uid, msg.author_id,
+        msg.date.strftime('%Y-%m-%d %H:%M:%S'), None,
+        msg.replies_to, msg.content, msg.sticker, attachment_id, embed_id)
     vals.append(val)
 
 try:
@@ -363,7 +420,7 @@ except Exception as e:
     traceback.print_exc()
 
 query = """
-INSERT IGNORE INTO tp_authors (uid, name, avatar_url, utype)
+INSERT IGNORE INTO authors (id, display_name, type, avatar_asset)
 VALUES (%s, %s, %s, %s);
 """
 vals = []
@@ -372,7 +429,8 @@ for au in authors.items():
     a = au[1]
     a.name = str(a.name) if a.name else None
     a.avatar_url = str(a.avatar_url) if a.avatar_url else None
-    vals.append((a.uid, a.name, a.avatar_url, int(a.user_type)))
+    asset_id = insert_asset(cursor, Asset(a.avatar_url, "image"), "avi")
+    vals.append((a.uid, a.name, str(a.user_type), asset_id))
 
 try:
     cursor.executemany(query, vals)
