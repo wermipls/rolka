@@ -306,7 +306,7 @@ def mention_to_id(match, authors_by_name):
     if name in authors_by_name:
         return f'<@{authors_by_name[name].uid}>'
     else:
-        return f'<@{name}>'
+        return f'@{name}'
 
 def resolve_mentions_to_id(content, authors_by_name):
     return re.sub(
