@@ -212,10 +212,10 @@ def parse_attachments(chatmsg) -> List[Asset] | None:
                 Asset(media['src'], 'image'))
         if media.name == 'video':
             attachments.append(
-                Asset('video', media.source['src']))
+                Asset(media.source['src'], 'video'))
         if media.name == 'audio':
             attachments.append(
-                Asset('audio', media.source['src']))
+                Asset(media.source['src'], 'audio'))
 
     if len(attachments) > 0:
         return attachments

@@ -80,10 +80,37 @@ class MessageRenderer
         }
     }
 
+    private function drawEmbed(Embed $e)
+    {
+        echo "<div class='msg_embed'>";
+        if ($e->author) {
+            echo "<div class='msg_embed_author'>";
+            echo htmlspecialchars($e->author);
+            echo "</div>";
+        }
+        if ($e->title) {
+            echo "<div class='msg_embed_title'>";
+            echo htmlspecialchars($e->title);
+            echo "</div>";
+        }
+        if ($e->description) {
+            $c = $this->parser->parse($e->description);
+            echo "<div class='msg_embed_desc'>{$c}</div>";
+        }
+        echo "</div>";
+    }
+
     private function drawAttachments(Message $msg)
     {
         foreach ($this->channel->fetchAttachments($msg) as $a) {
             $this->drawAttachment($a);
+        }
+    }
+
+    private function drawEmbeds(Message $msg)
+    {
+        foreach ($this->channel->fetchEmbeds($msg) as $e) {
+            $this->drawEmbed($e);
         }
     }
 
@@ -118,6 +145,7 @@ class MessageRenderer
         </div>
     <?php endif; ?>
     <?php $this->drawAttachments($msg) ?>
+    <?php $this->drawEmbeds($msg) ?>
     <?php $this->drawSticker($msg) ?>
 </div>
 <?php

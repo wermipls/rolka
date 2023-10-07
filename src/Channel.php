@@ -36,6 +36,30 @@ class Channel
         }
     }
 
+    public function fetchEmbeds(Message $msg): \Generator
+    {
+        if ($msg->embed) {
+            $embed_query = $this->db->prepare(
+                "SELECT * FROM `embeds` `e`
+                 WHERE `e`.`group_id` = :id");
+            $embed_query->bindParam(':id', $msg->embed, PDO::PARAM_INT);
+            $embed_query->execute();
+            while ($eq = $embed_query->fetch()) {
+                $e = new Embed(
+                    $eq['id'],
+                    $eq['author'],
+                    $eq['author_url'],
+                    $eq['title'],
+                    $eq['title_url'],
+                    $eq['description'],
+                    null,
+                    $eq['asset_id']
+                );
+                yield $e;
+            }
+        }
+    }
+
     private function mapMessage(Array $row): Message
     {
         $author = new Author(
@@ -51,7 +75,8 @@ class Channel
             $row['content'],
             $row['replies_to'],
             $row['sticker'],
-            $row['attachment_group']
+            $row['attachment_group'],
+            $row['embed_group']
         );
     }
 

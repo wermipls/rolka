@@ -13,6 +13,7 @@ class Message
         public ?int $replies_to,
         public ?string $sticker,
         public ?int $attachment,
+        public ?int $embed,
     ) {
     }
 }
