@@ -315,14 +315,21 @@ def resolve_mentions_to_id(content, authors_by_name):
         content)
 
 def insert_asset(cursor, a, prefix):
+    cursor.execute("SELECT id FROM assets WHERE hash = %s LIMIT 1", [a.xxh128])
+    aq = cursor.fetchone()
+    if aq:
+        print(f"asset exists: {aq[0]}")
+        return aq[0]
+
     if args.assetdir:
         a.convert_copy(args.assetdir, prefix)
-        cursor.execute("""
-            INSERT INTO assets (type, og_name, url, hash, size)
-            VALUES (%s, %s, %s, %s, %s)""",
-            [a._type, a.og_name, a.url, a.xxh128, a.size]
-        )
-        return cursor.lastrowid
+
+    cursor.execute("""
+        INSERT INTO assets (type, og_name, url, hash, size)
+        VALUES (%s, %s, %s, %s, %s)""",
+        [a._type, a.og_name, a.url, a.xxh128, a.size]
+    )
+    return cursor.lastrowid
 
 msgs = {}
 
