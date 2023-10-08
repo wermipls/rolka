@@ -116,6 +116,12 @@ a, a:hover, a:visited, a:active {
     margin-bottom: 8px;
 }
 
+.msg_embed_asset {
+    display: inline-block;
+    max-height: 350px;
+    max-width: 100%;
+}
+
 .msg_reply {
     color: var(--color-fg-secondary);
 }

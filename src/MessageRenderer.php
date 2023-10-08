@@ -59,7 +59,7 @@ class MessageRenderer
 
     }
 
-    private function drawAttachment(Attachment $att)
+    private function drawAttachment(Asset $att)
     {
         $url = htmlspecialchars($att->url);
         switch ($att->type) {
@@ -76,6 +76,27 @@ class MessageRenderer
             preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
             $fname = $matches[1];
             echo "<div class='msg_attachment msg_element'><a class='msg_file' href='$url'>File: $fname</a></div>";
+            break;
+        }
+    }
+
+    private function drawEmbedAsset(Asset $att)
+    {
+        $url = htmlspecialchars($att->url);
+        switch ($att->type) {
+        case 'image':
+            echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_embed_asset' src='$url'></img></a>";
+            break;
+        case 'video':
+            echo "<video class='msg_embed_asset' src='$url' controls></video>";
+            break;
+        case 'audio':
+            echo "<audio class='msg_embed_asset' src='$url' controls></audio>";
+            break;
+        case 'file':
+            preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
+            $fname = $matches[1];
+            echo "<div class='msg_embed_asset'><a class='msg_file' href='$url'>File: $fname</a></div>";
             break;
         }
     }
@@ -120,6 +141,13 @@ class MessageRenderer
             echo "<div class='container_16_9'>"
                 ."<iframe class='embed_if' loading='lazy' src='{$e->embed_url}'></iframe>"
                 ."</div>";
+        }
+        if ($e->asset) {
+            if ($has_rich_box) {
+                $this->drawEmbedAsset($e->asset);
+            } else {
+                $this->drawAttachment($e->asset);
+            }
         }
         if ($e->footer) {
             if ($e->footer_url) {

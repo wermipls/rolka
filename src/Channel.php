@@ -19,15 +19,15 @@ class Channel
     {
         if ($msg->attachment) {
             $att_query = $this->db->prepare(
-                "SELECT `att`.`id`, `type`, `url` FROM `attachments` `att`
+                "SELECT `att`.`asset_id`, `type`, `url` FROM `attachments` `att`
                  INNER JOIN `assets` `a`
                  ON `a`.`id` = `att`.`asset_id`
                  WHERE `att`.`group_id` = :id");
             $att_query->bindParam(':id', $msg->attachment, PDO::PARAM_INT);
             $att_query->execute();
             while ($aq = $att_query->fetch()) {
-                $a = new Attachment(
-                    $aq['id'],
+                $a = new Asset(
+                    $aq['asset_id'],
                     $aq['type'],
                     $aq['url']
                 );
@@ -40,11 +40,17 @@ class Channel
     {
         if ($msg->embed) {
             $embed_query = $this->db->prepare(
-                "SELECT * FROM `embeds` `e`
+                "SELECT 
+                    `e`.*,
+                    `a`.`url` AS `asset_url`,
+                    `a`.`type` AS `asset_type`
+                 FROM `embeds` `e`
+                 LEFT JOIN `assets` `a`
+                 ON `a`.`id` = `e`.`asset_id`
                  WHERE `e`.`group_id` = :id");
             $embed_query->bindParam(':id', $msg->embed, PDO::PARAM_INT);
             $embed_query->execute();
-            while ($eq = $embed_query->fetch()) {
+            while ($eq = $embed_query->fetch(PDO::FETCH_NAMED)) {
                 $e = new Embed(
                     $eq['id'],
                     $eq['url'],
@@ -61,7 +67,10 @@ class Channel
                     $eq['title'],
                     $eq['title_url'],
                     $eq['description'],
-                    $eq['asset_id'],
+                    $eq['asset_id'] ? new Asset($eq['asset_id'],
+                                                $eq['asset_type'],
+                                                $eq['asset_url'])
+                                    : null,
                     $eq['embed_url']
                 );
                 yield $e;

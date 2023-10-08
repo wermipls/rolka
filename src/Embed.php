@@ -19,7 +19,7 @@ class Embed
         public ?string $title,
         public ?string $title_url,
         public ?string $description,
-        public ?int $asset_id,
+        public ?Asset $asset,
         public ?string $embed_url,
     ) {
     }

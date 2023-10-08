@@ -2,7 +2,7 @@
 
 namespace rolka;
 
-class Attachment
+class Asset
 {
     public function __construct(
         public int $id,
