@@ -19,7 +19,7 @@ class Channel
     {
         if ($msg->attachment) {
             $att_query = $this->db->prepare(
-                "SELECT `type`, `url` FROM `attachments` `att`
+                "SELECT `att`.`id`, `type`, `url` FROM `attachments` `att`
                  INNER JOIN `assets` `a`
                  ON `a`.`id` = `att`.`asset_id`
                  WHERE `att`.`group_id` = :id");
@@ -27,7 +27,7 @@ class Channel
             $att_query->execute();
             while ($aq = $att_query->fetch()) {
                 $a = new Attachment(
-                    $msg->attachment,
+                    $aq['id'],
                     $aq['type'],
                     $aq['url']
                 );
