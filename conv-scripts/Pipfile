@@ -9,6 +9,7 @@ beautifulsoup4 = "*"
 python-dateutil = "*"
 mysql-connector = "*"
 xxhash = "*"
+requests = "*"
 
 [dev-packages]
 

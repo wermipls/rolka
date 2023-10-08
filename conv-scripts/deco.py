@@ -12,6 +12,7 @@ import xxhash
 import os
 from urllib import parse as urlparse
 import shutil
+import requests
 
 parser = argparse.ArgumentParser()
 parser.add_argument("input")
@@ -104,6 +105,18 @@ class Embed:
     description: str | None = None
     embed_url: str | None = None
     asset: Asset | None = None
+
+    def is_empty(self):
+        return not any([
+            self.url,
+            self.footer,
+            self.provider,
+            self.author,
+            self.title,
+            self.description,
+            self.embed_url,
+            self.asset
+        ])
 
     def __repr__(self):
         return f"        {self.author}\n        {self.title}\n        {self.description}"
@@ -292,6 +305,38 @@ def parse_embeds(chatmsg) -> List[Embed] | None:
 
     return embeds if len(embeds) else None
 
+def try_download_asset(url: str, basedst: str, ext) -> str | None:
+    fn = xxhash.xxh128(url).hexdigest() + ext
+    dst = os.path.join(basedst, fn)
+    if os.path.exists(dst):
+        print(f"'{dst}' exists, skipping download")
+        return dst
+    r = requests.get(url, stream=True)
+    if r.status_code == requests.codes.ok:
+        with open(dst, "wb") as f:
+            for ch in r.iter_content(chunk_size=1024):
+                f.write(ch)
+        return dst
+    else:
+        print(f"failed to download '{url}': {r.status_code}")
+
+def find_urls(msg: str):
+    matches = re.findall(
+        r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+        msg
+    )
+    return matches
+
+def restore_video_embeds(msg: str):
+    embeds = []
+    for url in find_urls(msg):
+        if ".mp4" in url:
+            fp = try_download_asset(url, args.assetdir, ".mp4")
+            if not fp:
+                continue
+            a = Asset(fp, 'video')
+            embeds.append(Embed(url=url, asset=a, type_='video'))
+    return embeds
 
 reply_id = re.compile(r"scrollToMessage\(event,'(\d+)'\)")
 re_sticker = re.compile(r'.+\/([\d]+)-[\w]+\.[\w]+')
@@ -327,6 +372,11 @@ def parse_message(msg, author_id) -> Message:
 
     attachments = parse_attachments(msg)
     embeds = parse_embeds(msg)
+    ea = restore_video_embeds(content if content else '')
+    if embeds:
+        embeds.extend(ea)
+    else:
+        embeds = ea
 
     message = Message(
         msg_id,
@@ -423,6 +473,25 @@ connection = mysql.connector.connect(
 
 cursor = connection.cursor()
 
+query = """
+INSERT IGNORE INTO authors (id, display_name, type, avatar_asset)
+VALUES (%s, %s, %s, %s);
+"""
+vals = []
+
+for au in authors.items():
+    a = au[1]
+    a.name = str(a.name) if a.name else None
+    a.avatar_url = str(a.avatar_url) if a.avatar_url else None
+    asset_id = insert_asset(cursor, Asset(a.avatar_url, "image"), "avi")
+    vals.append((a.uid, a.name, str(a.user_type), asset_id))
+
+try:
+    cursor.executemany(query, vals)
+    connection.commit()
+except Exception as e:
+    traceback.print_exc()
+
 query = f"""
 REPLACE INTO {args.t} 
 (id, author_id, sent, modified, replies_to, content, sticker, attachment_group, embed_group) 
@@ -449,6 +518,10 @@ for m in msgs.items():
         cursor.execute("INSERT INTO embed_groups (id) VALUES (NULL)")
         embed_id = cursor.lastrowid
         for e in msg.embed:
+            if e.is_empty():
+                print("===== EMPTY EMBED")
+                continue
+
             asset_id = None
             if (e.asset):
                 asset_id = insert_asset(cursor, e.asset, "embed/" + str(embed_id))
@@ -467,25 +540,6 @@ for m in msgs.items():
         msg.date.strftime('%Y-%m-%d %H:%M:%S'), None,
         msg.replies_to, msg.content, msg.sticker, attachment_id, embed_id)
     vals.append(val)
-
-try:
-    cursor.executemany(query, vals)
-    connection.commit()
-except Exception as e:
-    traceback.print_exc()
-
-query = """
-INSERT IGNORE INTO authors (id, display_name, type, avatar_asset)
-VALUES (%s, %s, %s, %s);
-"""
-vals = []
-
-for au in authors.items():
-    a = au[1]
-    a.name = str(a.name) if a.name else None
-    a.avatar_url = str(a.avatar_url) if a.avatar_url else None
-    asset_id = insert_asset(cursor, Asset(a.avatar_url, "image"), "avi")
-    vals.append((a.uid, a.name, str(a.user_type), asset_id))
 
 try:
     cursor.executemany(query, vals)
