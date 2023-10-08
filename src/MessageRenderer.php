@@ -82,22 +82,41 @@ class MessageRenderer
 
     private function drawEmbed(Embed $e)
     {
-        echo "<div class='msg_embed'>";
+        $has_rich_box = $e->type == 'link';
+        $color = $e->color ?? 'var(--color-fg-secondary)';
+ 
+        if ($has_rich_box) echo "<div class='msg_embed' style='border-left: 4px solid {$color}'>";
         if ($e->author) {
-            echo "<div class='msg_embed_author'>";
-            echo htmlspecialchars($e->author);
-            echo "</div>";
+            if ($e->author_url) {
+                echo "<div class='msg_embed_author'>"
+                    ."<a href='" . htmlspecialchars($e->author_url) . "'>"
+                    .htmlspecialchars($e->author)
+                    ."</a>"
+                    ."</div>";
+            } else {
+                echo "<div class='msg_embed_author'>"
+                    .htmlspecialchars($e->author)
+                    ."</div>";
+            }
         }
         if ($e->title) {
-            echo "<div class='msg_embed_title'>";
-            echo htmlspecialchars($e->title);
-            echo "</div>";
+            if ($e->title_url) {
+                echo "<div class='msg_embed_title'>"
+                    ."<a href='" . htmlspecialchars($e->title_url) . "'>"
+                    .htmlspecialchars($e->title)
+                    ."</a>"
+                    ."</div>";
+            } else {
+                echo "<div class='msg_embed_title'>"
+                    .htmlspecialchars($e->title)
+                    ."</div>";
+            }
         }
         if ($e->description) {
             $c = $this->parser->parse($e->description);
             echo "<div class='msg_embed_desc'>{$c}</div>";
         }
-        echo "</div>";
+        if ($has_rich_box) echo "</div>";
     }
 
     private function drawAttachments(Message $msg)

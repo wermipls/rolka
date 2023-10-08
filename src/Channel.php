@@ -47,13 +47,22 @@ class Channel
             while ($eq = $embed_query->fetch()) {
                 $e = new Embed(
                     $eq['id'],
+                    $eq['url'],
+                    $eq['type'],
+                    $eq['color'],
+                    $eq['timestamp'] ? new \DateTimeImmutable($eq['timestamp'])
+                                     : null,
+                    $eq['provider'],
+                    $eq['provider_url'],
+                    $eq['footer'],
+                    $eq['footer_url'],
                     $eq['author'],
                     $eq['author_url'],
                     $eq['title'],
                     $eq['title_url'],
                     $eq['description'],
-                    null,
-                    $eq['asset_id']
+                    $eq['asset_id'],
+                    $eq['embed_url']
                 );
                 yield $e;
             }
