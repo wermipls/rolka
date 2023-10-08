@@ -116,6 +116,24 @@ class MessageRenderer
             $c = $this->parser->parse($e->description);
             echo "<div class='msg_embed_desc'>{$c}</div>";
         }
+        if ($e->embed_url) {
+            echo "<div class='container_16_9'>"
+                ."<iframe class='embed_if' loading='lazy' src='{$e->embed_url}'></iframe>"
+                ."</div>";
+        }
+        if ($e->footer) {
+            if ($e->footer_url) {
+                echo "<div class='msg_embed_footer'>"
+                    ."<a href='" . htmlspecialchars($e->footer_url) . "'>"
+                    .htmlspecialchars($e->footer)
+                    ."</a>"
+                    ."</div>";
+            } else {
+                echo "<div class='msg_embed_footer'>"
+                    .htmlspecialchars($e->footer)
+                    ."</div>";
+            }
+        }
         if ($has_rich_box) echo "</div>";
     }
 

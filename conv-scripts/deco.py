@@ -90,12 +90,19 @@ class Asset:
 
 @dataclass
 class Embed:
+    url: str | None = None
+    type_: str = 'link'
+    color: str | None = None
+    footer: str | None = None
+    footer_url: str | None = None
+    provider: str | None = None
+    provider_url: str | None = None
     author: str | None = None
     author_url: str | None = None
     title: str | None = None
     title_url: str | None = None
     description: str | None = None
-    special_container_url: str | None = None
+    embed_url: str | None = None
     asset: Asset | None = None
 
     def __repr__(self):
@@ -132,7 +139,7 @@ def try_find_timestamp(chatmsg):
         return None
 
 # finds id or None if not present
-def find_author_id(chatmsg) -> int | None:
+def find_author_id(msg) -> int | None:
     a = msg.find(class_='chatlog__author')
     if a:
         return int(a['data-user-id'])
@@ -140,7 +147,7 @@ def find_author_id(chatmsg) -> int | None:
         return None
 
 # returns author or None if not present
-def find_author(chatmsg) -> Author | None:
+def find_author(msg) -> Author | None:
     a = msg.find(class_='chatlog__author')
     if a:
         author = Author(
@@ -197,7 +204,7 @@ def parse_markdown(content):
 
     content.smooth()
 
-    return str(content.string)
+    return str(content.string) if content.string else None
 
 def parse_attachments(chatmsg) -> List[Asset] | None:
     attachments = []
@@ -222,11 +229,7 @@ def parse_attachments(chatmsg) -> List[Asset] | None:
     else:
         return None
 
-def parse_embed(chatmsg) -> Embed | None:
-    e = chatmsg.find(class_='chatlog__embed')
-    if not e:
-        return None
-
+def parse_embed(e) -> Embed | None:
     embed = Embed()
     
     url = e.find(class_='chatlog__embed-author-link')
@@ -252,13 +255,49 @@ def parse_embed(chatmsg) -> Embed | None:
             content = parse_markdown(content)
             embed.description = content
 
+    img = e.find(class_='chatlog__embed-plainimage')
+    if img:
+        a = Asset(img['src'], 'image')
+        embed.asset = a
+        embed.type_ = 'image'
+
+    img = e.find(class_='chatlog__embed-image')
+    if img:
+        a = Asset(img['src'], 'image')
+        embed.asset = a
+
+    footer = e.find(class_='chatlog__embed-footer-text')
+    if footer:
+        embed.footer = str(footer.string)
+
+    color = e.find(class_='chatlog__embed-color-pill')
+    if color:
+        if 'chatlog__embed-color-pill--default' not in color['class']:
+            m = re.match(r'background-color:(.*)', str(color['style']))
+            if m:
+                embed.color = m.group(1)
+                print(e.color)
+
+    yt = e.find(class_='chatlog__embed-youtube')
+    if yt:
+        embed.embed_url = str(yt['src'])
+
     return embed
+
+def parse_embeds(chatmsg) -> List[Embed] | None:
+    embeds = []
+
+    for e in chatmsg.find_all(class_='chatlog__embed'):
+        embeds.append(parse_embed(e))
+
+    return embeds if len(embeds) else None
+
 
 reply_id = re.compile(r"scrollToMessage\(event,'(\d+)'\)")
 re_sticker = re.compile(r'.+\/([\d]+)-[\w]+\.[\w]+')
 
-def parse_message(chatmsg, author_id) -> Message:
-    msg_id = int(chatmsg.parent['data-message-id'])
+def parse_message(msg, author_id) -> Message:
+    msg_id = int(msg.parent['data-message-id'])
 
     new_id = find_author_id(msg)
     if new_id:
@@ -286,8 +325,8 @@ def parse_message(chatmsg, author_id) -> Message:
         if reply:
             reply = int(reply.group(1))
 
-    attachments = parse_attachments(chatmsg)
-    embed = parse_embed(chatmsg)
+    attachments = parse_attachments(msg)
+    embeds = parse_embeds(msg)
 
     message = Message(
         msg_id,
@@ -296,7 +335,7 @@ def parse_message(chatmsg, author_id) -> Message:
         timestamp,
         sticker=sticker,
         attachments=attachments,
-        embed=[embed] if embed else None,
+        embed=embeds,
         replies_to=reply)
 
     return message
@@ -392,10 +431,10 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
 vals = []
 
 for m in msgs.items():
-    msg = m[1]
+    msg: Message = m[1]
     msg.content = str(msg.content) if msg.content else None
-    msg.sticker = str(msg.sticker) if msg.sticker else None
-    msg.replies_to = str(msg.replies_to) if msg.replies_to else None
+    msg.sticker = int(msg.sticker) if msg.sticker else None
+    msg.replies_to = int(msg.replies_to) if msg.replies_to else None
     attachment_id = None
     if msg.attachments:
         cursor.execute("INSERT INTO attachment_groups (id) VALUES (NULL)")
@@ -410,10 +449,19 @@ for m in msgs.items():
         cursor.execute("INSERT INTO embed_groups (id) VALUES (NULL)")
         embed_id = cursor.lastrowid
         for e in msg.embed:
+            asset_id = None
+            if (e.asset):
+                asset_id = insert_asset(cursor, e.asset, "embed/" + str(embed_id))
+
             cursor.execute("""
-                INSERT INTO embeds (group_id, author, author_url, title, title_url, description, special_url)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                [embed_id, e.author, e.author_url, e.title, e.title_url, e.description, e.special_container_url])
+                INSERT INTO embeds 
+                (group_id,     type,         color,   footer,
+                 author,       author_url,   title,   title_url, 
+                 description,  embed_url,    asset_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                [embed_id,     e.type_,      e.color, e.footer,
+                 e.author,     e.author_url, e.title, e.title_url,
+                 e.description,e.embed_url,  asset_id])
 
     val = (msg.uid, msg.author_id,
         msg.date.strftime('%Y-%m-%d %H:%M:%S'), None,

@@ -199,12 +199,24 @@ a.msg_file {
 }
 
 .msg_embed {
-    display: inline-block;
+    width: fit-content;
     padding: 6px 12px;
     border-radius: 8px;
     background-color: var(--color-bg-secondary);
     margin-right: 8px;
     margin-bottom: 8px;
+}
+
+.container_16_9 {
+    display: inline-block;
+    aspect-ratio: 16/9;
+}
+
+.embed_if {
+    width: 800px;
+    max-width: 100%;
+    height: 100%;
+    border: 0;
 }
 
 .msg_embed_title {
@@ -218,6 +230,11 @@ a.msg_file {
 }
 
 .msg_embed_desc {
+    margin: 6px 0;
+}
+
+.msg_embed_footer {
+    color: var(--color-fg-secondary);
     margin: 6px 0;
 }
 
