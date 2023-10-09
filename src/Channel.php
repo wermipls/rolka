@@ -56,8 +56,7 @@ class Channel
                     $eq['url'],
                     $eq['type'],
                     $eq['color'],
-                    $eq['timestamp'] ? new \DateTimeImmutable($eq['timestamp'])
-                                     : null,
+                    DateHelper::fromDB($eq['timestamp']),
                     $eq['provider'],
                     $eq['provider_url'],
                     $eq['footer'],
@@ -89,7 +88,7 @@ class Channel
         return new Message(
             $row['id'][0],
             $author,
-            new \DateTimeImmutable($row['sent']),
+            DateHelper::fromDB($row['sent']),
             $row['content'],
             $row['replies_to'],
             $row['sticker'],
