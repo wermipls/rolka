@@ -162,6 +162,30 @@ a, a:hover, a:visited, a:active {
     color: var(--color-accent);
 }
 
+.msg_timestamp {
+    display: inline-block;
+    background-color: var(--color-bg-secondary);
+    border-radius: 5px;
+    padding: 0 2px;
+    color: color-mix(in lch, var(--color-bg) 25%, var(--color-fg));
+}
+
+.msg_spoiler {
+    background-color: var(--color-bg-secondary);
+    border-radius: 5px;
+    padding: 0 2px;
+    padding-top: 0.2em;
+    padding-bottom: 0.4em;
+}
+
+.msg_spoiler_content {
+    visibility: hidden;
+}
+
+.msg_spoiler:hover > .msg_spoiler_content {
+    visibility: visible;
+}
+
 .msg_emote {
     height: 1.5em;
     width: 1.5em;

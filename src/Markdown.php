@@ -16,9 +16,9 @@ class Markdown extends Parsedown
     {
         $this->author_names = $author_names;
 
-        $this->InlineTypes['<'] = ['Mention', 'Emoticon', 'SpecialCharacter'];
-
-        $this->inlineMarkerList .= '<';
+        $this->InlineTypes['<'] = ['Mention', 'Emoticon', 'Timestamp', 'SpecialCharacter'];
+        $this->InlineTypes['|'] = ['Spoiler'];
+        $this->inlineMarkerList .= '|';
     }
 
     protected function inlineMention($excerpt)
@@ -57,6 +57,46 @@ class Markdown extends Parsedown
         }
     }
 
+    protected function inlineTimestamp($excerpt)
+    {
+        if (preg_match('/^<t:([\d]+)(:[\w])?>/', $excerpt['text'], $matches)) {
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'span',
+                    'text' => (new \DateTimeImmutable('@' . $matches[1]))
+                        ->format('Y-m-d H:i'),
+                    'attributes' => array(
+                        'class' => 'msg_timestamp'
+                    ),
+                ),
+            );
+        }
+    }
+
+    protected function inlineSpoiler($excerpt)
+    {
+        if (preg_match('/^\|\|(.+?)\|\|/', $excerpt['text'], $matches)) {
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'span',
+                    'handler' => 'element',
+                    'text' => array(
+                        'handler' => 'line',
+                        'name' => 'span',
+                        'text' => $matches[1],
+                        'attributes' => array(
+                            'class' => 'msg_spoiler_content'
+                        ),
+                    ),
+                    'attributes' => array(
+                        'class' => 'msg_spoiler'
+                    ),
+                ),
+            );
+        }
+    }
 
     protected function inlineEmailTag($Excerpt)
     {

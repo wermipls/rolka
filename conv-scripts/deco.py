@@ -189,7 +189,7 @@ re_emoji = re.compile(r'.+cdn.discordapp.com\/emojis\/([0-9]+).')
 def parse_markdown(content):
     # mentions
     for m in content.find_all(class_='chatlog__markdown-mention'):
-        m.string = f'<{m.string}>'
+        m.string = f'<{m.string}>' if (m.string[0] == '@') else m.string
         m.unwrap()
 
     # motes
@@ -203,19 +203,30 @@ def parse_markdown(content):
 
     # links
     for l in content.find_all('a'):
-        l.unwrap()
+        if l.string == l['href']:
+            l.unwrap()
+        else:
+            l.replace_with(f"[{parse_markdown(l)}]({l['href']})")
 
     # em
     for em in content.find_all('em'):
-        em.replace_with(f'*{em.string}*')
+        em.replace_with(f'*{parse_markdown(em)}*')
 
     # bold
     for b in content.find_all('b'):
-        b.replace_with(f'**{b.string}**')
+        b.replace_with(f'**{parse_markdown(b)}**')
 
     # inline code
     for c in content.find_all('code'):
-        c.replace_with(f'`{c.string}`')
+        c.replace_with(f'`{parse_markdown(c)}`')
+
+    # timestamp
+    for t in content.find_all(class_='chatlog__markdown-timestamp'):
+        t.replace_with(f"<t:{int(parse_datetime(t['title']).timestamp())}>")
+
+    # spoiler
+    for s in content.find_all(class_='chatlog__markdown-spoiler'):
+        s.replace_with(f'||{parse_markdown(s)}||')
 
     content.smooth()
 
