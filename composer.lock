@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "17b6d78337e33583cb01d2ddac3ec0d7",
+    "content-hash": "884cd87febf32202990e8c2c8e6c4083",
     "packages": [
         {
             "name": "astrotomic/php-twemoji",
-            "version": "dev-fast-regexp",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/wermipls/php-twemoji.git",
-                "reference": "5d2bef73cdbe6b540e4bfa78896be9710e47c9bb"
+                "reference": "2f026b25d233dfe483561f054f85de15771c3e6f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wermipls/php-twemoji/zipball/5d2bef73cdbe6b540e4bfa78896be9710e47c9bb",
-                "reference": "5d2bef73cdbe6b540e4bfa78896be9710e47c9bb",
+                "url": "https://api.github.com/repos/wermipls/php-twemoji/zipball/2f026b25d233dfe483561f054f85de15771c3e6f",
+                "reference": "2f026b25d233dfe483561f054f85de15771c3e6f",
                 "shasum": ""
             },
             "require": {
@@ -28,12 +28,13 @@
             "require-dev": {
                 "pestphp/pest": "^0.3.0",
                 "s9e/regexp-builder": "^1.4",
-                "spatie/emoji": "^2.3.0",
+                "spatie/emoji": "^4.0.0",
                 "spatie/pest-plugin-snapshots": "^1.0"
             },
             "suggest": {
                 "spatie/emoji": "*"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -67,9 +68,9 @@
                 "unicode"
             ],
             "support": {
-                "source": "https://github.com/wermipls/php-twemoji/tree/fast-regexp"
+                "source": "https://github.com/wermipls/php-twemoji/tree/main"
             },
-            "time": "2023-09-30T08:02:31+00:00"
+            "time": "2023-10-09T07:03:43+00:00"
         },
         {
             "name": "erusev/parsedown",

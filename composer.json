@@ -3,7 +3,7 @@
     "description": "read-only chatlog dump",
     "require": {
         "erusev/parsedown": "^1.7",
-        "astrotomic/php-twemoji": "dev-fast-regexp"
+        "astrotomic/php-twemoji": "dev-main"
     },
     "repositories": [
         {
