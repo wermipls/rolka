@@ -2,7 +2,7 @@ import argparse
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
 from enum import StrEnum
-from datetime import datetime
+from datetime import datetime, timezone
 from dateutil import parser as dateparser
 from typing import List
 import re
@@ -136,7 +136,9 @@ def parse_datetime(dt: str | None) -> datetime:
     if not dt:
         return dateparser.parse("1970-01-01 00:00")
 
-    return dateparser.parse(dt)
+    date = dateparser.parse(dt)
+    date.replace(tzinfo=datetime.now(timezone.utc).astimezone().tzinfo)
+    return date.astimezone(timezone.utc);
 
 def try_find_timestamp(chatmsg):
     # case 1: chatlog__timestamp in header
