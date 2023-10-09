@@ -7,11 +7,31 @@ use DateTimeInterface;
 class MessageRenderer
 {
     private ?Message $prev_msg = null;
+    private int $timestamp;
+    private Array $asset_urls = [];
 
     public function __construct(
         private MessageParser $parser,
-        private Channel $channel
+        private Channel $channel,
+        private string $asset_key
     ) {
+        $this->timestamp = time();
+    }
+
+    private function assetUrl(string $url): string
+    {
+        if (isset($this->asset_urls[$url])) {
+            return $this->asset_urls[$url];
+        }
+        $s = SignedStamp::withKey(
+            $this->timestamp,
+            $url,
+            $this->asset_key);
+
+        $url_signed = "{$url}?k={$s->hash}&ts={$this->timestamp}";
+        $this->asset_urls[$url] = $url_signed;
+
+        return $url_signed;
     }
 
     private function parse(Message $msg): string
@@ -38,7 +58,7 @@ class MessageRenderer
 
 ?>
 <div class='msg_side'>
-    <img class='msg_avi' src='<?php echo $msg->author->avatar_url ?>'></img>
+    <img class='msg_avi' src='<?php echo $this->assetUrl($msg->author->avatar_url) ?>'></img>
 </div>
 <div class='msg_header'>
     <span class='msg_user'><?php echo $msg->author->name ?> </span>
@@ -61,7 +81,7 @@ class MessageRenderer
 
     private function drawAttachment(Asset $att)
     {
-        $url = htmlspecialchars($att->url);
+        $url = $this->assetUrl($att->url);
         switch ($att->type) {
         case 'image':
             echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$url'></img></a>";
@@ -82,7 +102,7 @@ class MessageRenderer
 
     private function drawEmbedAsset(Asset $att)
     {
-        $url = htmlspecialchars($att->url);
+        $url = $this->assetUrl($att->url);
         switch ($att->type) {
         case 'image':
             echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_embed_asset' src='$url'></img></a>";

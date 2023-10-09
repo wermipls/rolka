@@ -59,7 +59,7 @@ if (!$origin_id) {
 
 $channel = new Channel($db, $channel_name);
 $parser = new MessageParser($authors_by_id);
-$renderer = new MessageRenderer($parser, $channel);
+$renderer = new MessageRenderer($parser, $channel, $config['asset_key']);
 
 foreach ($channel->fetchMessages($origin_id, 250) as $msg) {
     $renderer->draw($msg);
