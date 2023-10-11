@@ -272,7 +272,7 @@ class MessageRenderer
 
     private function drawNextButton(int $id)
     {
-        echo "<a class='nav_pagebtn' href='/?from={$id}'>Next page</a>";
+        echo "<a class='nav_pagebtn' href='/?c={$this->channel->id}&from={$id}'>Next page</a>";
     }
     public function finish()
     {

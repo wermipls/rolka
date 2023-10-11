@@ -10,9 +10,13 @@ class Channel
 
     public function __construct(
         private PDO $db,
-        string $channel
+        public int $id
     ) {
-        $this->channel = static::$table_prefix . $channel . '_messages';
+        $q = $db->prepare("SELECT * FROM channels WHERE id = ?");
+        $q->execute([$id]);
+        $ch = $q->fetch();
+
+        $this->channel = static::$table_prefix . $ch['table_name'] . '_messages';
     }
 
     public function fetchAttachments(Message $msg): \Generator

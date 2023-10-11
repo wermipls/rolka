@@ -31,11 +31,6 @@ function fetch_authors(PDO $db)
     return $f;
 }
 
-function channel_table_from_id($config, $id): string
-{
-    return $config['channel_tables'][$id] ?? current($config['channel_tables']);
-}
-
 $config = include("../config.php");
 
 $db_opts = [
@@ -48,16 +43,14 @@ $db = new PDO(
 
 $authors_by_id = fetch_authors($db);
 
-$channel_name = channel_table_from_id(
-    $config,
-    filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT));
+$channel_id = filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT) ?? 0;
 
 $origin_id = filter_input(INPUT_GET, 'from', FILTER_VALIDATE_INT);
 if (!$origin_id) {
     $origin_id = 0;
 }
 
-$channel = new Channel($db, $channel_name);
+$channel = new Channel($db, $channel_id);
 $parser = new MessageParser($authors_by_id);
 $renderer = new MessageRenderer($parser, $channel, $config['asset_key']);
 
