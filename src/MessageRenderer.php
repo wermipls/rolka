@@ -81,13 +81,15 @@ class MessageRenderer
 
     private function drawAttachment(Asset $att)
     {
-        $url = $this->assetUrl($att->url);
+        $url   = $this->assetUrl($att->url);
+        $thumb = $this->assetUrl($att->thumb());
         switch ($att->type) {
         case 'image':
-            echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$url'></img></a>";
+            echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$thumb'></img></a>";
             break;
         case 'video':
-            echo "<video class='msg_attachment msg_element' src='$url' controls></video>";
+            $poster = $att->thumb_url ? "poster='{$thumb}'" : '';
+            echo "<video class='msg_attachment msg_element' src='$url' $poster preload='none' controls></video>";
             break;
         case 'audio':
             echo "<audio class='msg_attachment msg_element' src='$url' controls></audio>";
@@ -102,13 +104,15 @@ class MessageRenderer
 
     private function drawEmbedAsset(Asset $att)
     {
-        $url = $this->assetUrl($att->url);
+        $url   = $this->assetUrl($att->url);
+        $thumb = $this->assetUrl($att->thumb());
         switch ($att->type) {
         case 'image':
-            echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_embed_asset' src='$url'></img></a>";
+            echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_embed_asset' src='$thumb'></img></a>";
             break;
         case 'video':
-            echo "<video class='msg_embed_asset' src='$url' controls></video>";
+            $poster = $att->thumb_url ? "poster='{$thumb}'" : '';
+            echo "<video class='msg_embed_asset' src='$url' $poster preload='none' controls></video>";
             break;
         case 'audio':
             echo "<audio class='msg_embed_asset' src='$url' controls></audio>";

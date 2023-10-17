@@ -23,7 +23,8 @@ class Channel
     {
         if ($msg->attachment) {
             $att_query = $this->db->prepare(
-                "SELECT `att`.`asset_id`, `type`, `url` FROM `attachments` `att`
+                "SELECT `att`.`asset_id`, `type`, `url`, `thumb_url`
+                 FROM `attachments` `att`
                  INNER JOIN `assets` `a`
                  ON `a`.`id` = `att`.`asset_id`
                  WHERE `att`.`group_id` = :id");
@@ -33,7 +34,8 @@ class Channel
                 $a = new Asset(
                     $aq['asset_id'],
                     $aq['type'],
-                    $aq['url']
+                    $aq['url'],
+                    $aq['thumb_url']
                 );
                 yield $a;
             }
@@ -47,7 +49,8 @@ class Channel
                 "SELECT 
                     `e`.*,
                     `a`.`url` AS `asset_url`,
-                    `a`.`type` AS `asset_type`
+                    `a`.`type` AS `asset_type`,
+                    `a`.`thumb_url` AS `asset_thumb`
                  FROM `embeds` `e`
                  LEFT JOIN `assets` `a`
                  ON `a`.`id` = `e`.`asset_id`
@@ -72,7 +75,8 @@ class Channel
                     $eq['description'],
                     $eq['asset_id'] ? new Asset($eq['asset_id'],
                                                 $eq['asset_type'],
-                                                $eq['asset_url'])
+                                                $eq['asset_url'],
+                                                $eq['asset_thumb'])
                                     : null,
                     $eq['embed_url']
                 );
@@ -86,7 +90,7 @@ class Channel
         $author = new Author(
             $row['author_id'],
             $row['display_name'],
-            $row['url']
+            (new Asset(-1, 'image', $row['url'], $row['thumb_url']))->thumb()
         );
 
         return new Message(
@@ -123,7 +127,7 @@ class Channel
     public function fetchMessages(int $last_id, int $limit = 0): \Generator
     {
         $select = $this->db->prepare(
-            "SELECT ch.*, a.*, assets.url
+            "SELECT ch.*, a.*, assets.*
              FROM `{$this->channel}` ch
              INNER JOIN authors a
              ON ch.author_id = a.id
