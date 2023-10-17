@@ -8,13 +8,17 @@ class MediaConverter
     private ExecWrapper $ffprobe;
     private ExecWrapper $magick;
     private ExecWrapper $cjpeg;
+    private ExecWrapper $pngquant;
+    private ExecWrapper $oxipng;
 
     public function __construct(string $cjpeg_path)
     {
-        $this->ffmpeg  = new ExecWrapper('ffmpeg');
-        $this->ffprobe = new ExecWrapper('ffprobe');
-        $this->magick  = new ExecWrapper('magick');
-        $this->cjpeg   = new ExecWrapper($cjpeg_path);
+        $this->ffmpeg   = new ExecWrapper('ffmpeg');
+        $this->ffprobe  = new ExecWrapper('ffprobe');
+        $this->magick   = new ExecWrapper('magick');
+        $this->pngquant = new ExecWrapper('pngquant');
+        $this->oxipng   = new ExecWrapper('oxipng');
+        $this->cjpeg    = new ExecWrapper($cjpeg_path);
     }
 
     private function probeStreams(array $extra_args = []): ?object
@@ -91,6 +95,75 @@ class MediaConverter
         return true;
     }
 
+    private function makePng(
+        string $input,
+        string $output,
+        ?int $width = null,
+        ?int $height = null,
+        bool $lossy = false): bool
+    {
+        $rescale = $width || $height;
+
+        $width  = $width  ?? -1;
+        $height = $height ?? -1;
+
+        $base_args = [
+            '-frames:v', '1',
+        ];
+
+        $args = ['-i', $input, ...$base_args];
+        
+        if ($rescale) {
+            $args = [
+                ...$args,
+                '-vf',
+                "scale={$width}:{$height}"
+                . ":force_original_aspect_ratio=decrease:flags=bilinear",
+            ];
+        }
+
+        $args = [...$args, '-y', $output];
+
+        $ret = $this->ffmpeg->run($args);
+        if ($ret !== 0) {
+            error_log(__FUNCTION__.": failed to run ffmpeg! exit code: {$ret}");
+            return false;
+        }
+
+        if ($lossy === true) {
+            $pq_args = [
+                '--skip-if-larger',
+                '--speed', '1',
+                '--force',
+                '-o', $output,
+                $output
+            ];
+            $ret = $this->pngquant->run($pq_args);
+            if ($ret !== 0) {
+                error_log(__FUNCTION__.": failed to run pngquant! exit code: {$ret}");
+            }
+        }
+
+        $oxi_args = [
+            $output,
+            '--strip', 'safe',
+            '--alpha',
+            '--opt', 'max',
+            '--interlace', '1',
+            '--force',
+            '--out', $output
+        ];
+
+        $ret = $this->oxipng->run($oxi_args);
+        if ($ret !== 0) {
+            error_log(__FUNCTION__.": failed to run oxipng! exit code: {$ret}");
+            unlink($output);
+            return false;
+        }
+
+        return true;
+    }
+
     public function makeThumbnail(
         string $input,
         string $output,
@@ -98,12 +171,12 @@ class MediaConverter
         int $height,
         int $max_size_bytes = 50000,
         bool $force = false
-    ): bool
+    ): ?string
     {
         $stream = $this->probeStream([$input], 'video');
         if (!$stream) {
             error_log(__FUNCTION__.": failed to probe video stream in '{$input}'");
-            return false;
+            return null;
         }
 
         $is_big_res = ($stream->width > $width) || ($stream->height > $height);
@@ -111,11 +184,16 @@ class MediaConverter
         $is_big_fsize = $og_size > $max_size_bytes;
         if (!$force && !$is_big_res && !$is_big_fsize) {
             error_log(__FUNCTION__.": '{$input}' smaller than threshold, skipping");
-            return false;
+            return null;
         }
 
         $width  = $is_big_res ? $width  : null;
         $height = $is_big_res ? $height : null;
+
+        $out_png = $output . '.png';
+        $output  = $output . '.jpg';
+
+        $ok = $this->makePng($input, $out_png, $width, $height, true);
 
         $max_q = 75;
         $min_q = 40;
@@ -125,7 +203,7 @@ class MediaConverter
         for ($i = 10; $i > 0; $i--) {
             $ok = $this->makeJpeg($input, $output, $width, $height, $best_q);
             if (!$ok) {
-                return false;
+                return null;
             }
 
             clearstatcache();
@@ -157,12 +235,22 @@ class MediaConverter
             $best_q = $target_q;
         }
 
+        $size_png = filesize($out_png);
+        if ($size_png < $size) {
+            error_log(__FUNCTION__.": png smaller than jpg");
+            unlink($output);
+            $output = $out_png;
+            $size = $size_png;
+        } else {
+            unlink($out_png);
+        }
+
         if (!$force && $og_size < $size) {
             error_log(__FUNCTION__.": new thumb bigger than original, removing...");
             unlink($output);
-            return false;
+            return null;
         }
 
-        return true;
+        return $output;
     }
 }

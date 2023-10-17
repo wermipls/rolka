@@ -114,12 +114,12 @@ class AssetManager
         $w = $is_avi ? 256 : 800;
         $h = $is_avi ? 256 : 600;
         
-        $thumb_path = $this->base_dir . $this->thumb_dir . $asset_id . '.jpg';
+        $thumb_path = $this->base_dir . $this->thumb_dir . $asset_id;
 
         $thumb = $this->conv->makeThumbnail(
             $path, $thumb_path, $w, $h, 25*1024, $a->type != 'image');
 
-        if ($thumb === false) {
+        if ($thumb === null) {
             return;
         }
 
@@ -128,7 +128,7 @@ class AssetManager
              SET thumb_url = ?
              WHERE id = ?");
         $q->execute([
-            $this->toUrl($thumb_path),
+            $this->toUrl($thumb),
             $asset_id
         ]);
     }
