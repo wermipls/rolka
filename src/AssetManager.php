@@ -40,10 +40,13 @@ class AssetManager
 
         [
             'thumb_url'  => $a->thumb_url,
-            'id'         => $a->id,
             'thumb_hash' => $a->thumb_hash,
+            'id'         => $a->id,
             'hash'       => $a->hash,
             'size'       => $a->size,
+            'optimized'  => $a->is_optimized,
+            'og_url'     => $a->original_url,
+            'og_hash'    => $a->original_hash,
         ] = $row;
 
         return $a;
@@ -121,12 +124,14 @@ class AssetManager
         ]);
     }
 
-    public function generateThumbnails()
+    public function generateThumbnails(bool $force = false)
     {
         $q = $this->pdo->query('SELECT id FROM assets');
 
         foreach ($q->fetchAll() as $a) {
-            $this->deleteThumbnail($a['id']);
+            if ($force) {
+                $this->deleteThumbnail($a['id']);
+            }
             $this->generateThumbnail($a['id']);
         }
     }
@@ -135,7 +140,59 @@ class AssetManager
     {
         $a = $this->fetchAsset($asset_id);
 
-        $this->conv->optimize($this->toPath($a->url));
+        if ($a->is_optimized) {
+            error_log(__FUNCTION__.": asset {$asset_id} already optimized");
+            return;
+        }
+
+        $path = $this->toPath($a->url);
+        $path_og = $path . '.bak';
+
+        if (file_exists($path_og)) {
+            error_log(
+                __FUNCTION__.": backup '{$path_og}' already exists... aborting");
+            return;
+        }
+
+        $ok = copy($path, $path_og);
+        if (!$ok) {
+            error_log(__FUNCTION__.": failed to back up file '{$path}'");
+            return;
+        }
+            
+        $ok = $this->conv->optimize($path);
+        if (!$ok) {
+            error_log(__FUNCTION__.": failed to optimize '{$path}'");
+            rename($path_og, $path);
+            return;
+        }
+
+        $new_hash = hash_file('xxh128', $path);
+        $new_size = filesize($path);
+
+        $q = $this->pdo->prepare(
+            "UPDATE assets
+             SET
+                optimized = TRUE,
+                size = :size,
+                hash = :hash,
+                og_url = :og_url,
+                og_hash = :og_hash
+             WHERE id = :id"
+        );
+
+        $q->bindValue('og_url', $this->toUrl($path_og));
+        $q->bindParam('og_hash', $a->hash);
+        $q->bindParam('hash', $new_hash);
+        $q->bindValue('size', $new_size, \PDO::PARAM_INT);
+        $q->bindValue('id', $asset_id, \PDO::PARAM_INT);
+
+        $ok = $q->execute();
+        if (!$ok) {
+            error_log(
+                __FUNCTION__.": failed to update asset {$asset_id} in database...");
+            rename($path_og, $path);
+        }
     }
 
     public function optimizeAssets()
