@@ -10,8 +10,9 @@ class MediaConverter
     private ExecWrapper $cjpeg;
     private ExecWrapper $pngquant;
     private ExecWrapper $oxipng;
+    private ExecWrapper $jpegtran;
 
-    public function __construct(string $cjpeg_path)
+    public function __construct(string $cjpeg_path, string $jpegtran_path)
     {
         $this->ffmpeg   = new ExecWrapper('ffmpeg');
         $this->ffprobe  = new ExecWrapper('ffprobe');
@@ -19,6 +20,7 @@ class MediaConverter
         $this->pngquant = new ExecWrapper('pngquant');
         $this->oxipng   = new ExecWrapper('oxipng');
         $this->cjpeg    = new ExecWrapper($cjpeg_path);
+        $this->jpegtran = new ExecWrapper($jpegtran_path);
     }
 
     private function probeStreams(array $extra_args = []): ?object
@@ -290,6 +292,22 @@ class MediaConverter
         return true;
     }
 
+    private function optimizeJpeg(string $input): bool
+    {
+        $args = [
+            '-outfile', $input,
+            $input,
+        ];
+
+        $ret = $this->jpegtran->run($args);
+        if ($ret !== 0) {
+            error_log(__FUNCTION__.": failed to run jpegtran! exit code: {$ret}");
+            return false;
+        }
+
+        return true;
+    }
+
     private function detectFormat(string $input): ?string
     {
         $format = $this->probeFormat([$input]);
@@ -334,6 +352,13 @@ class MediaConverter
         {
         case 'png':
             $ok = $this->optimizePng($input);
+            if (!$ok) {
+                error_log(__FUNCTION__.": failed to optimize png '{$input}'");
+                return false;
+            }
+            break;
+        case 'jpeg':
+            $ok = $this->optimizeJpeg($input);
             if (!$ok) {
                 error_log(__FUNCTION__.": failed to optimize png '{$input}'");
                 return false;
