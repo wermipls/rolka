@@ -50,6 +50,22 @@ class MediaConverter
         return null;
     }
 
+    private function probeFormat(array $extra_args = []): ?object
+    {
+        $args = [
+            '-print_format', 'json',
+            '-show_format',
+        ];
+
+        $ret = $this->ffprobe->run([...$args, ...$extra_args], $stdout);
+
+        if ($ret === 0) {
+            return (json_decode($stdout))->format;
+        } else {
+            return null;
+        }
+    }
+
     private function makeJpeg(
         string $input,
         string $output,
@@ -252,5 +268,87 @@ class MediaConverter
         }
 
         return $output;
+    }
+
+    private function optimizePng(string $input): bool
+    {
+        $oxi_args = [
+            $input,
+            '--strip', 'safe',
+            '--alpha',
+            '--opt', 'max',
+            '--interlace', '0',
+            '--out', $input
+        ];
+
+        $ret = $this->oxipng->run($oxi_args);
+        if ($ret !== 0) {
+            error_log(__FUNCTION__.": failed to run oxipng! exit code: {$ret}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private function detectFormat(string $input): ?string
+    {
+        $format = $this->probeFormat([$input]);
+        if (!$format) {
+            error_log(__FUNCTION__.": failed to probe format in '{$input}'");
+            return null;
+        }
+
+        $vs = $this->probeStream([$input], 'video');
+        if (!$format) {
+            error_log(__FUNCTION__.": failed to probe video stream in '{$input}'");
+        }
+
+        switch ($format->format_name)
+        {
+        case 'png_pipe':
+            return 'png';
+        case 'gif':
+            return 'gif';
+        case 'webp_pipe':
+            return 'webp';
+        case 'mov,mp4,m4a,3gp,3g2,mj2':
+            return 'mp4';
+        case 'matroska,webm':
+            return 'mkv/webm';
+        case 'image2':
+            if ($vs->codec_name == 'mjpeg') {
+                return 'jpeg';
+            }
+        default:
+            return 'unknown';
+        }
+    }
+
+    public function optimize(string $input, bool $lossy = false): bool
+    {
+        $format = $this->detectFormat($input);
+
+        $size_old = filesize($input);
+
+        switch ($format)
+        {
+        case 'png':
+            $ok = $this->optimizePng($input);
+            if (!$ok) {
+                error_log(__FUNCTION__.": failed to optimize png '{$input}'");
+                return false;
+            }
+            break;
+        default:
+            error_log(__FUNCTION__.": unhandled format '{$format}' for '{$input}'");
+            return false;
+        }
+
+        clearstatcache();
+        $size = filesize($input);
+
+        error_log("optimized '$input', size delta: " . $size - $size_old);
+
+        return true;
     }
 }

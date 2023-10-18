@@ -63,18 +63,6 @@ class AssetManager
         return $this->mapAsset($a);
     }
 
-    public function optimizeMedia(int $asset_id)
-    {
-        $q = $this->pdo->prepare('SELECT * FROM assets WHERE id = ?');
-        $q->execute([$asset_id]);
-
-        $a = $q->fetch();
-        if ($a === false) {
-            error_log(__FUNCTION__.": asset $asset_id does not exist");
-            return;
-        }
-    }
-
     public function deleteThumbnail(int $asset_id)
     {
         $a = $this->fetchAsset($asset_id);
@@ -140,6 +128,22 @@ class AssetManager
         foreach ($q->fetchAll() as $a) {
             $this->deleteThumbnail($a['id']);
             $this->generateThumbnail($a['id']);
+        }
+    }
+
+    public function optimizeAsset(int $asset_id)
+    {
+        $a = $this->fetchAsset($asset_id);
+
+        $this->conv->optimize($this->toPath($a->url));
+    }
+
+    public function optimizeAssets()
+    {
+        $q = $this->pdo->query('SELECT id FROM assets');
+
+        foreach ($q->fetchAll() as $a) {
+            $this->optimizeAsset($a['id']);
         }
     }
 }
