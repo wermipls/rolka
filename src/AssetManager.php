@@ -203,4 +203,64 @@ class AssetManager
             $this->optimizeAsset($a['id']);
         }
     }
+
+    public function unoptimizeAsset(int $asset_id)
+    {
+        $a = $this->fetchAsset($asset_id);
+
+        if (!$a->is_optimized) {
+            error_log(
+                __FUNCTION__.": asset {$asset_id} already unoptimized...");
+            return;
+        }
+
+        $path_og = $this->toPath($a->original_url);
+        $path    = $this->toPath($a->url);
+
+        if (!file_exists($path_og)) {
+            error_log(
+                __FUNCTION__.": backup '{$path_og}' does not exist...");
+            return;
+        }
+
+        if (!rename($path_og, $path)) {
+            error_log(
+                __FUNCTION__.": failed to restore backup '{$path_og}'...");
+            return;
+        }
+        
+        clearstatcache();
+        $size = filesize($path);
+
+        $q = $this->pdo->prepare(
+            "UPDATE assets
+             SET
+                optimized = FALSE,
+                size = :size,
+                hash = :hash,
+                og_url = NULL,
+                og_hash = NULL
+             WHERE id = :id"
+        );
+
+        $q->bindParam('hash', $a->original_hash);
+        $q->bindValue('size', $size, \PDO::PARAM_INT);
+        $q->bindValue('id', $asset_id, \PDO::PARAM_INT);
+
+        $ok = $q->execute();
+        if (!$ok) {
+            error_log(
+                __FUNCTION__.": failed to update asset {$asset_id} in database...");
+            rename($path_og, $path);
+        }
+    }
+
+    public function unoptimizeAssets()
+    {
+        $q = $this->pdo->query('SELECT id FROM assets');
+
+        foreach ($q->fetchAll() as $a) {
+            $this->unoptimizeAsset($a['id']);
+        }
+    }
 }
