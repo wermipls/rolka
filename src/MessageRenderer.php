@@ -262,6 +262,10 @@ class MessageRenderer
             $show_author = true;
         }
 
+        if ($msg->replies_to) {
+            $show_author = true;
+        }
+
 ?>
 <div class='msg' id='<?php echo $msg->id ?>'>
     <?php if ($show_author): ?>
