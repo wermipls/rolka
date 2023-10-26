@@ -40,7 +40,7 @@ class Markdown extends Parsedown
 
     protected function inlineEmoticon($excerpt)
     {
-        if (preg_match('/^<:([\w]+):([\w ]+)>/', $excerpt['text'], $matches)) {
+        if (preg_match('/^<a?:([\w]+):([\w ]+)>/', $excerpt['text'], $matches)) {
             return array(
                 'extent' => strlen($matches[0]),
                 'element' => array(
