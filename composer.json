@@ -3,7 +3,9 @@
     "description": "read-only chatlog dump",
     "require": {
         "erusev/parsedown": "^1.7",
-        "astrotomic/php-twemoji": "dev-main"
+        "astrotomic/php-twemoji": "dev-main",
+        "team-reflex/discord-php": "^7.3",
+        "react/async": "^4.1"
     },
     "repositories": [
         {

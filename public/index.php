@@ -16,18 +16,8 @@ require __DIR__ . '/../vendor/autoload.php';
 use rolka\ {
     MessageParser,
     MessageRenderer,
-    Channel
+    Context
 };
-
-function fetch_authors(PDO $db)
-{
-    $q = $db->query(
-        "SELECT a.id, a.display_name, assets.url FROM authors a
-         LEFT JOIN assets
-         ON a.avatar_asset = assets.url");
-    $f = $q->fetchAll(PDO::FETCH_COLUMN | PDO::FETCH_UNIQUE);
-    return $f;
-}
 
 $config = include("../config.php");
 
@@ -39,7 +29,9 @@ $db = new PDO(
     "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
     $config['db_user'], $config['db_pass'], $db_opts);
 
-$authors_by_id = fetch_authors($db);
+$ctx = new Context($db);
+
+$authors_by_id = $ctx->fetchAuthorNames();
 
 $channel_id = filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT) ?? 0;
 
@@ -48,7 +40,7 @@ if (!$origin_id) {
     $origin_id = 0;
 }
 
-$channel = new Channel($db, $channel_id);
+$channel = $ctx->getChannel($channel_id);
 $parser = new MessageParser($authors_by_id);
 $renderer = new MessageRenderer($parser, $channel, $config['asset_key']);
 

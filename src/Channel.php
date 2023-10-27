@@ -124,6 +124,39 @@ class Channel
         return $this->mapMessage($row);
     }
 
+    public function insertMessage(Message $m, bool $ignore_exists = true)
+    {
+        $ignore = $ignore_exists ? 'IGNORE' : '';
+        $s = $this->db->prepare("
+            INSERT $ignore INTO `{$this->channel}`
+            (
+                id,
+                author_id,
+                sent,
+                replies_to,
+                content,
+                sticker
+            )
+            VALUES
+            (
+                :id,
+                :author_id,
+                :sent,
+                :replies_to,
+                :content,
+                :sticker
+            )
+            ");
+        $s->bindParam(':id', $m->id);
+        $s->bindParam(':author_id', $m->author->id);
+        $s->bindValue(':sent', $m->date->format("Y-m-d H:i:s"));
+        $s->bindParam(':replies_to', $m->replies_to);
+        $s->bindParam(':content', $m->content);
+        $s->bindParam(':sticker', $m->sticker);
+
+        $s->execute();
+    }
+
     public function fetchMessages(int $last_id, int $limit = 0): \Generator
     {
         $select = $this->db->prepare(
