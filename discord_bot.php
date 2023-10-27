@@ -75,7 +75,7 @@ $onMsgCreate = function (Message $msg, Discord $d) use ($ctx, $mapped_ch)
 function fetchMessages(Channel $ch, $mapped_ch, ?int $last_id = null)
 {
     error_log(__FUNCTION__ .": last id $last_id");
-    $opts = ['limit' => 5];
+    $opts = ['limit' => 100];
     if ($last_id) {
         $opts['before'] = (string)$last_id;
     }
