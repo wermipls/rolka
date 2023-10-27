@@ -251,7 +251,7 @@ class MessageRenderer
             }
             
             $delta = $msg->date->diff($this->prev_msg->date);
-            if ($delta->i > 10) {
+            if (DateHelper::totalMinutes($delta) > 10) {
                 $show_author = true;
             }
 

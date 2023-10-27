@@ -1,6 +1,7 @@
 <?php
 
 namespace rolka;
+use DateInterval;
 use DateTimeInterface;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -20,5 +21,12 @@ class DateHelper
             return null;
         }
         return new DateTimeImmutable($t, new DateTimeZone("UTC"));
+    }
+
+    public static function totalMinutes(DateInterval $d)
+    {
+        return $d->i
+             + $d->h * 60
+             + $d->days * 60 * 24;
     }
 }
