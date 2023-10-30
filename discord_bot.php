@@ -15,7 +15,7 @@ use React\Async;
 $config = include(__DIR__.'/config.php');
 
 $db_opts = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING,
 ];
 $db = new PDO(
     "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
