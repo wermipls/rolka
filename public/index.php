@@ -19,7 +19,7 @@ use rolka\ {
     Context
 };
 
-$config = include("../config.php");
+$config = include(__DIR__ . "/../config.php");
 
 $db_opts = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
