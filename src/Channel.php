@@ -9,6 +9,7 @@ class Channel
     private string $channel;
 
     public function __construct(
+        public readonly Context $ctx,
         private PDO $db,
         public int $id
     ) {
@@ -94,6 +95,7 @@ class Channel
         );
 
         return new Message(
+            $this,
             $row['id'][0],
             $author,
             DateHelper::fromDB($row['sent']),
@@ -147,12 +149,12 @@ class Channel
                 :sticker
             )
             ");
-        $s->bindParam(':id', $m->id);
-        $s->bindParam(':author_id', $m->author->id);
+        $s->bindValue(':id', $m->id);
+        $s->bindValue(':author_id', $m->author);
         $s->bindValue(':sent', $m->date->format("Y-m-d H:i:s"));
-        $s->bindParam(':replies_to', $m->replies_to);
-        $s->bindParam(':content', $m->content);
-        $s->bindParam(':sticker', $m->sticker);
+        $s->bindValue(':replies_to', $m->replies_to);
+        $s->bindValue(':content', $m->content);
+        $s->bindValue(':sticker', $m->sticker);
 
         $s->execute();
     }

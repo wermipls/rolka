@@ -6,9 +6,9 @@ class MessageParser
 {
     private Markdown $markdown;
 
-    public function __construct(Array $authors_by_id)
+    public function __construct(Context $context)
     {
-        $this->markdown = new Markdown($authors_by_id);
+        $this->markdown = new Markdown($context);
         $this->markdown->setSafeMode(true);
         $this->markdown->setBreaksEnabled(true);
     }

@@ -27,8 +27,8 @@ $chn = $chn->fetchAll();
 $mapped_ch = [];
 
 foreach ($chn as $c) {
-    if ($c['sync_channel_id']) {
-        $mapped_ch[$c['sync_channel_id']] = new rolka\Channel($db, $c['id']);
+    if ($sync_id = $c['sync_channel_id']) {
+        $mapped_ch[$sync_id] = $ctx->getChannel($c['id']);
     }
 }
 
@@ -48,11 +48,12 @@ function mapInsertMessage(Message $msg, $mapped_ch)
     $ch = $mapped_ch[$msg->channel_id];
 
     $m = new rolka\Message(
+        $ch,
         $msg->id,
-        new rolka\Author($msg->author->id, '', ''), // FIXME: HACK
+        $msg->author->id,
         DateTimeImmutable::createFromMutable($msg->timestamp),
         $msg->content,
-        $msg->referenced_message !== null ? $msg->referenced_message->id : null,
+        $msg->referenced_message ? $msg->referenced_message->id : null,
         $msg->sticker_items ? $msg->sticker_items->first()->id : null,
         null,
         null

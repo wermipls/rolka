@@ -5,16 +5,16 @@ use Parsedown;
 
 class Markdown extends Parsedown
 {
-    private $author_names;
+    private Context $ctx;
 
     protected $safeLinksWhitelist = array(
         'http://',
         'https://',
     );
 
-    public function __construct($author_names)
+    public function __construct(Context $context)
     {
-        $this->author_names = $author_names;
+        $this->ctx = $context;
 
         $this->InlineTypes['<'] = ['Mention', 'Emoticon', 'Timestamp', 'SpecialCharacter'];
         $this->InlineTypes['|'] = ['Spoiler'];
@@ -24,7 +24,7 @@ class Markdown extends Parsedown
     protected function inlineMention($excerpt)
     {
         if (preg_match('/^<@(\d+)>/', $excerpt['text'], $matches)) {
-            $name = $this->author_names[$matches[1]] ?? 'Unknown User';
+            $name = $this->ctx->getAuthor($matches[1])->name ?? 'Unknown User';
             return array(
                 'extent' => strlen($matches[0]),
                 'element' => array(

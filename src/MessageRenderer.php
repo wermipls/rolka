@@ -42,7 +42,7 @@ class MessageRenderer
     private function parseReply(Message $msg): string
     {
         return strip_tags(
-            $this->parse($this->channel->fetchMessage($msg->replies_to)),
+            $this->parse($msg->repliesTo()),
             "<img><br>"
         );
     }
@@ -58,15 +58,15 @@ class MessageRenderer
 
 ?>
 <div class='msg_side'>
-    <img class='msg_avi' src='<?php echo $this->assetUrl($msg->author->avatar_url) ?>'></img>
+    <img class='msg_avi' src='<?php echo $this->assetUrl($msg->author()->avatar_url) ?>'></img>
 </div>
 <div class='msg_header'>
-    <span class='msg_user'><?php echo $msg->author->name ?> </span>
+    <span class='msg_user'><?php echo $msg->author()->name ?> </span>
     <?php if ($msg->replies_to): ?>
         <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
         <span class='msg_reply'> in response to </span>
         <a class='msg_reply_ref' href='#<?php echo $replies_to->id ?>'>
-            <span class='msg_reply_user'> <?php echo $replies_to->author->name ?> </span>
+            <span class='msg_reply_user'> <?php echo $replies_to->author()->name ?> </span>
             <?php echo $dts ?>
             <br>
             <span class='msg_reply_content'><?php echo $this->parseReply($msg) ?></span>

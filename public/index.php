@@ -31,7 +31,7 @@ $db = new PDO(
 
 $ctx = new Context($db);
 
-$authors_by_id = $ctx->fetchAuthorNames();
+$ctx->getAuthors();
 
 $channel_id = filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT) ?? 0;
 
@@ -41,7 +41,7 @@ if (!$origin_id) {
 }
 
 $channel = $ctx->getChannel($channel_id);
-$parser = new MessageParser($authors_by_id);
+$parser = new MessageParser($ctx);
 $renderer = new MessageRenderer($parser, $channel, $config['asset_key']);
 
 foreach ($channel->fetchMessages($origin_id, 250) as $msg) {
