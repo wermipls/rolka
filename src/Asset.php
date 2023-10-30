@@ -4,12 +4,13 @@ namespace rolka;
 
 class Asset
 {
-    public ?string $hash;
-    public ?string $thumb_hash;
-    public ?int $size;
-    public bool $is_optimized;
-    public ?string $original_url;
-    public ?string $original_hash;
+    public ?string $hash = null;
+    public ?string $thumb_hash = null;
+    public ?string $name = null;
+    public ?int $size = null;
+    public bool $is_optimized = false;
+    public ?string $original_url = null;
+    public ?string $original_hash = null;
 
     public function __construct(
         public int $id,

@@ -263,4 +263,114 @@ class AssetManager
             $this->unoptimizeAsset($a['id']);
         }
     }
+
+    public function getAssetByHash(string $hash): ?Asset
+    {
+        $q = $this->pdo->prepare(
+           "SELECT * FROM assets
+            WHERE
+                hash = :hash
+                OR thumb_hash = :hash
+                OR og_hash = :hash");
+
+        $q->bindValue('hash', $hash);
+        $q->execute();
+
+        foreach ($q->fetchAll() as $row) {
+            return $this->mapAsset($row);
+        }
+
+        return null;
+    }
+
+    private function insertAsset(Asset $a): ?Asset
+    {
+        $q = $this->pdo->prepare(
+           "INSERT INTO assets
+            (
+                url,
+                og_name,
+                type,
+                size,
+                hash,
+                thumb_url,
+                thumb_hash,
+                optimized,
+                og_url,
+                og_hash
+            )
+            VALUES
+            (
+                :url,
+                :og_name,
+                :type,
+                :size,
+                :hash,
+                :thumb_url,
+                :thumb_hash,
+                :optimized,
+                :og_url,
+                :og_hash
+            )");
+
+        $q->bindValue('url',        $a->url);
+        $q->bindValue('thumb_url',  $a->thumb_url);
+        $q->bindValue('og_url',     $a->original_url);
+        $q->bindValue('hash',       $a->hash);
+        $q->bindValue('thumb_hash', $a->thumb_hash);
+        $q->bindValue('og_hash',    $a->original_hash);
+        $q->bindValue('type',       $a->type);
+        $q->bindValue('optimized',  (int)$a->is_optimized);
+        $q->bindValue('size',       $a->size);
+        $q->bindValue('og_name',    $a->name);
+
+        if (!$q->execute()) {
+            return null;
+        }
+
+        $a->id = $this->pdo->lastInsertId();
+        return $a;
+    }
+
+    public function downloadAsset(string $url): ?Asset
+    {
+        if (!preg_match("/^[Hh][Tt][Tt][Pp][Ss]?:\/\//", $url)) {
+            return null;
+        }
+        $f = fopen($url, "rb");
+        if (!$f) {
+            return null;
+        }
+
+        $dir = $this->base_dir . dechex(time()) . hash('xxh128', $url) . '/';
+        mkdir($dir, recursive: true);
+
+        $match = preg_match("/^.*\/(.+?)(?:[\?\&].*)?$/", $url, $matches);
+        $name = $match ? $matches[1] : 'file';
+
+        $fp = $dir . $name;
+
+        if (file_exists($fp)) {
+            fclose($f);
+            return null;
+        }
+        file_put_contents($fp, $f);
+
+        fclose($f);
+
+        $hash = hash_file('xxh128', $fp);
+        $asset = $this->getAssetByHash($hash);
+        if ($asset) {
+            unlink($fp);
+            return $asset;
+        }
+
+        $asset = new Asset(-1, 'image', $this->toUrl($fp), null);
+
+        $asset->hash = $hash;
+        $asset->size = filesize($fp);
+        $asset->name = $name;
+
+        return $this->insertAsset($asset);
+    }
 }

@@ -137,7 +137,9 @@ class Channel
                 sent,
                 replies_to,
                 content,
-                sticker
+                sticker,
+                attachment_group,
+                embed_group
             )
             VALUES
             (
@@ -146,7 +148,9 @@ class Channel
                 :sent,
                 :replies_to,
                 :content,
-                :sticker
+                :sticker,
+                :attachment_group,
+                :embed_group
             )
             ");
         $s->bindValue(':id', $m->id);
@@ -155,6 +159,8 @@ class Channel
         $s->bindValue(':replies_to', $m->replies_to);
         $s->bindValue(':content', $m->content);
         $s->bindValue(':sticker', $m->sticker);
+        $s->bindValue(':attachment_group', $m->attachment);
+        $s->bindValue(':embed_group', $m->embed);
 
         $s->execute();
     }

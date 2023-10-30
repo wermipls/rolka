@@ -80,4 +80,28 @@ class Context
     {
         return new Channel($this, $this->db, $id);
     }
+
+    public function insertAttachmentGroup(Array $assets): ?int
+    {
+        $q = $this->db->query("INSERT INTO attachment_groups (id) VALUES (NULL)");
+
+        if (!$q) {
+            return null;
+        }
+
+        $group_id = $this->db->lastInsertId();
+
+        foreach ($assets as $a) {
+            $q = $this->db->prepare(
+               "INSERT INTO attachments
+                (group_id, asset_id)
+                VALUES
+                (?, ?)");
+            if (!$q->execute([$group_id, $a->id])) {
+                return null;
+            }
+        }
+
+        return $group_id;
+    }
 }

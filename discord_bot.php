@@ -8,6 +8,7 @@ use Discord\Parts\Channel\Message;
 use Discord\WebSockets\Intents;
 use Discord\WebSockets\Event;
 use Discord\Parts\Channel\Channel;
+use rolka\AssetManager;
 use rolka\Context;
 use React\Async;
 
@@ -43,9 +44,24 @@ $d = new Discord([
     'logger' => $discord_logger
 ]);
 
-function mapInsertMessage(Message $msg, $mapped_ch)
+$conv = new rolka\MediaConverter(
+    $config['mozjpeg_cjpeg'],
+    $config['mozjpeg_jpegtran']
+);
+$am = new rolka\AssetManager($ctx->db, $config['asset_path'], $conv);
+
+$mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
 {
     $ch = $mapped_ch[$msg->channel_id];
+
+    $attachments = [];
+
+    if ($msg->attachments) {
+        foreach ($msg->attachments as $a) {
+            $asset = $am->downloadAsset($a->url);
+            array_push($attachments, $asset);
+        }
+    }
 
     $m = new rolka\Message(
         $ch,
@@ -55,14 +71,14 @@ function mapInsertMessage(Message $msg, $mapped_ch)
         $msg->content,
         $msg->referenced_message ? $msg->referenced_message->id : null,
         $msg->sticker_items ? $msg->sticker_items->first()->id : null,
-        null,
+        $ctx->insertAttachmentGroup($attachments),
         null
     );
     
     $ch->insertMessage($m);
-}
+};
 
-$onMsgCreate = function (Message $msg, Discord $d) use ($ctx, $mapped_ch)
+$onMsgCreate = function (Message $msg, Discord $d) use ($ctx, $mapped_ch, $mapInsertMessage)
 {
     echo "{$msg->author->username}: {$msg->content}", PHP_EOL;
 
@@ -70,7 +86,7 @@ $onMsgCreate = function (Message $msg, Discord $d) use ($ctx, $mapped_ch)
         return;
     }
 
-    mapInsertMessage($msg, $mapped_ch);
+    $mapInsertMessage($msg, $mapped_ch);
 };
 
 function fetchMessages(Channel $ch, $mapped_ch, ?int $last_id = null)
@@ -84,7 +100,7 @@ function fetchMessages(Channel $ch, $mapped_ch, ?int $last_id = null)
     return Async\await($ch->getMessageHistory($opts));
 }
 
-function fetchWholeHistory(Discord $d, int $channel_id, $mapped_ch)
+$fetchWholeHistory = function (Discord $d, int $channel_id, $mapped_ch) use ($mapInsertMessage)
 {
     $channel = $d->getChannel($channel_id);
 
@@ -95,7 +111,7 @@ function fetchWholeHistory(Discord $d, int $channel_id, $mapped_ch)
 
         if ($messages instanceof Collection) {
             foreach ($messages as $msg) {
-                mapInsertMessage($msg, $mapped_ch);
+                $mapInsertMessage($msg, $mapped_ch);
             }
             $last = $messages->last();
             if (!$last) {
@@ -106,15 +122,15 @@ function fetchWholeHistory(Discord $d, int $channel_id, $mapped_ch)
             break;
         }
     }
-}
+};
 
-$d->on('ready', function (Discord $d) use ($onMsgCreate, $mapped_ch) {
+$d->on('ready', function (Discord $d) use ($onMsgCreate, $fetchWholeHistory, $mapped_ch) {
     error_log("Hello World!");
 
     $d->on(Event::MESSAGE_CREATE, $onMsgCreate);
 
     foreach ($mapped_ch as $id => $channel) {
-        fetchWholeHistory($d, $id, $mapped_ch);
+        $fetchWholeHistory($d, $id, $mapped_ch);
     }
 });
 
