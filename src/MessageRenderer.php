@@ -58,7 +58,7 @@ class MessageRenderer
 
 ?>
 <div class='msg_side'>
-    <img class='msg_avi' src='<?php echo $this->assetUrl($msg->author()->avatar_url) ?>'></img>
+    <img class='msg_avi' src='<?php echo $this->assetUrl($msg->author()->avatarUrl()) ?>'></img>
 </div>
 <div class='msg_header'>
     <span class='msg_user'><?php echo $msg->author()->name ?> </span>

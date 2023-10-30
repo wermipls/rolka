@@ -4,13 +4,26 @@ namespace rolka;
 
 class Author
 {
+    private ?Asset $avatar = null;
+    public readonly ?int $avatar_id;
     public function __construct(
         public int $id,
         public string $name,
-        public ?string $avatar_url
+        null|int|Asset $avatar
     ) {
-        if (!$this->avatar_url) {
-            $this->avatar_url = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        if ($avatar != null && $avatar instanceof Asset) {
+            $this->avatar = $avatar;
+            $this->avatar_id = $avatar->id;
+        } else {
+            $this->avatar_id = $avatar;
         }
+    }
+
+    public function avatarUrl(): ?string
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+        return $this->avatar->thumb();
     }
 }

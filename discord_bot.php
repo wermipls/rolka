@@ -62,11 +62,20 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
             array_push($attachments, $asset);
         }
     }
+    
+    if (!($author = $ctx->getAuthor($msg->author->id))) {
+        $author = new rolka\Author(
+            $msg->author->id,
+            $msg->author->username,
+            $am->downloadAsset($msg->author->avatar)
+        );
+        $ctx->insertAuthor($author);
+    }
 
     $m = new rolka\Message(
         $ch,
         $msg->id,
-        $msg->author->id,
+        $author,
         DateTimeImmutable::createFromMutable($msg->timestamp),
         $msg->content,
         $msg->referenced_message ? $msg->referenced_message->id : null,

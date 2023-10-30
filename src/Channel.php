@@ -91,7 +91,11 @@ class Channel
         $author = new Author(
             $row['author_id'],
             $row['display_name'],
-            (new Asset(-1, 'image', $row['url'], $row['thumb_url']))->thumb()
+            new Asset(
+                $row['avatar_asset'],
+                'image',
+                $row['url'],
+                $row['thumb_url'])
         );
 
         return new Message(
