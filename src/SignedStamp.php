@@ -51,9 +51,6 @@ class SignedStamp
 
     public function validate(string $key): bool
     {
-        if ($this->isTimestampValid()) {
-            return hash_equals($this->hash, $this->hash($key));
-        }
-        return false;
+        return hash_equals($this->hash, $this->hash($key));
     }
 }

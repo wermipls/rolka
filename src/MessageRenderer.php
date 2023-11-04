@@ -15,7 +15,7 @@ class MessageRenderer
         private Channel $channel,
         private string $asset_key
     ) {
-        $this->timestamp = time();
+        $this->timestamp = 0;
     }
 
     private function assetUrl(string $url): string
@@ -28,7 +28,7 @@ class MessageRenderer
             $url,
             $this->asset_key);
 
-        $url_signed = "{$url}?k={$s->hash}&ts={$this->timestamp}";
+        $url_signed = "{$url}?k={$s->hash}";
         $this->asset_urls[$url] = $url_signed;
 
         return $url_signed;
