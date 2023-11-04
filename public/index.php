@@ -33,7 +33,7 @@ $ctx = new Context($db);
 
 $ctx->getAuthors();
 
-$channel_id = filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT) ?? 0;
+$channel_id = filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT);
 
 $origin_id = filter_input(INPUT_GET, 'from', FILTER_VALIDATE_INT);
 if (!$origin_id) {

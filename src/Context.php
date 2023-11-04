@@ -116,7 +116,7 @@ class Context
         return $author;
     }
 
-    public function getChannel(int $id): Channel
+    public function getChannel(?int $id): Channel
     {
         return new Channel($this, $this->db, $id);
     }

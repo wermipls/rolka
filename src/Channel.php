@@ -11,12 +11,21 @@ class Channel
     public function __construct(
         public readonly Context $ctx,
         private PDO $db,
-        public int $id
+        public ?int $id = null
     ) {
-        $q = $db->prepare("SELECT * FROM channels WHERE id = ?");
-        $q->execute([$id]);
+        if ($id !== null) {
+            $q = $db->prepare("SELECT * FROM channels WHERE id = ?");
+            $q->execute([$id]);
+        } else {
+            $q = $db->query("SELECT * FROM `channels` LIMIT 1");
+        }
         $ch = $q->fetch();
 
+        if (!$ch) {
+            throw new \Exception("unable to fetch channel id {$id}");
+        }
+
+        $this->id = $ch['id'];
         $this->channel = static::$table_prefix . $ch['table_name'] . '_messages';
     }
 
