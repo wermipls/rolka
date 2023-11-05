@@ -423,6 +423,11 @@ def insert_asset(cursor, a, prefix):
         print(f"asset exists: {aq[0]}")
         return aq[0]
 
+    if prefix:
+        prefix += "/" + xxhash.xxh128(a.url).hexdigest()
+    else:
+        prefix = xxhash.xxh128(a.url).hexdigest()
+
     if args.assetdir:
         a.convert_copy(args.assetdir, prefix)
 
@@ -522,7 +527,7 @@ for m in msgs.items():
         cursor.execute("INSERT INTO attachment_groups (id) VALUES (NULL)")
         attachment_id = cursor.lastrowid
         for a in msg.attachments:
-            asset_id = insert_asset(cursor, a, str(attachment_id))
+            asset_id = insert_asset(cursor, a, None)
             cursor.execute("INSERT INTO attachments (group_id, asset_id) VALUES (%s, %s)",
                 [attachment_id, asset_id])
 
@@ -537,7 +542,7 @@ for m in msgs.items():
 
             asset_id = None
             if (e.asset):
-                asset_id = insert_asset(cursor, e.asset, "embed/" + str(embed_id))
+                asset_id = insert_asset(cursor, e.asset, "embed")
 
             cursor.execute("""
                 INSERT INTO embeds 
