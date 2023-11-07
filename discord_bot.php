@@ -83,7 +83,12 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
         $ctx->insertAttachmentGroup($attachments),
         null
     );
-    
+
+    // hack... should put stuff on a queue
+    foreach ($attachments as $a) {
+        $am->generateThumbnail($a->id);
+    }
+
     $ch->insertMessage($m);
 };
 
