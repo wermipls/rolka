@@ -19,4 +19,11 @@ class MessageParser
         $content = (new EmojiText($content))->toTag();
         return $content;
     }
+
+    public function parseEmoji(string $content): string
+    {
+        $content = htmlspecialchars($content);
+        $content = (new EmojiText($content))->toTag();
+        return $content;
+    }
 }

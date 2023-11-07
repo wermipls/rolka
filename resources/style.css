@@ -78,10 +78,6 @@ a, a:hover, a:visited, a:active {
     min-width: 0;
 }
 
-.msg_big {
-    font-size: 2em;
-}
-
 .msg_element {
     margin-bottom: 5px;
 }
@@ -187,10 +183,26 @@ a, a:hover, a:visited, a:active {
 }
 
 .msg_emote {
+    height: 1.2em;
+    width: 1.2em;
+    object-fit: contain;
+    vertical-align: -0.2em;
+}
+
+.msg_content .msg_emote {
+    vertical-align: top;
     height: 1.5em;
     width: 1.5em;
-    object-fit: contain;
-    vertical-align: top;
+}
+
+.msg_ping .msg_emote {
+    height: 1.2em;
+    width: 1.2em;
+}
+
+.msg_big .msg_emote {
+    width: 3em;
+    height: 3em;
 }
 
 .msg_date_header {

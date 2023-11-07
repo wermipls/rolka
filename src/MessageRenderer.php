@@ -61,12 +61,12 @@ class MessageRenderer
     <img class='msg_avi' src='<?php echo $this->assetUrl($msg->author()->avatarUrl()) ?>'></img>
 </div>
 <div class='msg_header'>
-    <span class='msg_user'><?php echo $msg->author()->name ?> </span>
+    <span class='msg_user'><?php echo $this->parser->parseEmoji($msg->author()->name) ?> </span>
     <?php if ($msg->replies_to): ?>
         <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
         <span class='msg_reply'> in response to </span>
         <a class='msg_reply_ref' href='#<?php echo $replies_to->id ?>'>
-            <span class='msg_reply_user'> <?php echo $replies_to->author()->name ?> </span>
+            <span class='msg_reply_user'> <?php echo $this->parser->parseEmoji($replies_to->author()->name) ?> </span>
             <?php echo $dts ?>
             <br>
             <span class='msg_reply_content'><?php echo $this->parseReply($msg) ?></span>
@@ -137,12 +137,12 @@ class MessageRenderer
             if ($e->author_url) {
                 echo "<div class='msg_embed_author'>"
                     ."<a href='" . htmlspecialchars($e->author_url) . "'>"
-                    .htmlspecialchars($e->author)
+                    .$this->parser->parseEmoji($e->author)
                     ."</a>"
                     ."</div>";
             } else {
                 echo "<div class='msg_embed_author'>"
-                    .htmlspecialchars($e->author)
+                    .$this->parser->parseEmoji($e->author)
                     ."</div>";
             }
         }
@@ -150,12 +150,12 @@ class MessageRenderer
             if ($e->title_url) {
                 echo "<div class='msg_embed_title'>"
                     ."<a href='" . htmlspecialchars($e->title_url) . "'>"
-                    .htmlspecialchars($e->title)
+                    .$this->parser->parseEmoji($e->title)
                     ."</a>"
                     ."</div>";
             } else {
                 echo "<div class='msg_embed_title'>"
-                    .htmlspecialchars($e->title)
+                    .$this->parser->parseEmoji($e->title)
                     ."</div>";
             }
         }
@@ -179,12 +179,12 @@ class MessageRenderer
             if ($e->footer_url) {
                 echo "<div class='msg_embed_footer'>"
                     ."<a href='" . htmlspecialchars($e->footer_url) . "'>"
-                    .htmlspecialchars($e->footer)
+                    .$this->parser->parseEmoji($e->footer)
                     ."</a>"
                     ."</div>";
             } else {
                 echo "<div class='msg_embed_footer'>"
-                    .htmlspecialchars($e->footer)
+                    .$this->parser->parseEmoji($e->footer)
                     ."</div>";
             }
         }
