@@ -25,6 +25,18 @@ class Asset
         return $this->thumb_url ? $this->thumb_url : $this->url;
     }
 
+    public function naturalSize(): string
+    {
+        $s = $this->size;
+        if ($s > 1000*1000) {
+            return number_format($s/1000000, 1, thousands_separator: '') . "MB";
+        } else if ($s > 1000) {
+            return number_format($s/1000, 1, thousands_separator: '') . "KB";
+        } else {
+            return $s . "B";
+        }
+    }
+
     public function __toString()
     {
         return "[Attachment: {$this->type}]";

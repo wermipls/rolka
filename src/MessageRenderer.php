@@ -95,9 +95,10 @@ class MessageRenderer
             echo "<audio class='msg_attachment msg_element' src='$url' controls></audio>";
             break;
         case 'file':
-            preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
-            $fname = $matches[1];
-            echo "<div class='msg_attachment msg_element'><a class='msg_file' href='$url'>File: $fname</a></div>";
+            preg_match('/^(?:.*\/)?(.+)$/', $att->url, $matches);
+            $fname = $att->name ?? $matches[1];
+            $size = $att->naturalSize();
+            echo "<div class='msg_attachment'><a class='msg_file' href='$url'>File: $fname ($size)</a></div>";
             break;
         }
     }
@@ -118,9 +119,10 @@ class MessageRenderer
             echo "<audio class='msg_embed_asset' src='$url' controls></audio>";
             break;
         case 'file':
-            preg_match('/^(?:.*\/)?(.+)$/', $url, $matches);
-            $fname = $matches[1];
-            echo "<div class='msg_embed_asset'><a class='msg_file' href='$url'>File: $fname</a></div>";
+            preg_match('/^(?:.*\/)?(.+)$/', $att->url, $matches);
+            $fname = $att->name ?? $matches[1];
+            $size = $att->naturalSize();
+            echo "<div class='msg_embed_asset'><a class='msg_file' href='$url'>File: $fname ($size)</a></div>";
             break;
         }
     }
@@ -193,6 +195,7 @@ class MessageRenderer
     {
         foreach ($this->channel->fetchAttachments($msg) as $a) {
             $this->drawAttachment($a);
+            echo "<br>";
         }
     }
 

@@ -33,7 +33,7 @@ class Channel
     {
         if ($msg->attachment) {
             $att_query = $this->db->prepare(
-                "SELECT `att`.`asset_id`, `type`, `url`, `thumb_url`
+                "SELECT `att`.`asset_id`, `type`, `url`, `thumb_url`, `size`
                  FROM `attachments` `att`
                  INNER JOIN `assets` `a`
                  ON `a`.`id` = `att`.`asset_id`
@@ -45,8 +45,9 @@ class Channel
                     $aq['asset_id'],
                     $aq['type'],
                     $aq['url'],
-                    $aq['thumb_url']
+                    $aq['thumb_url'],
                 );
+                $a->size = $aq['size'];
                 yield $a;
             }
         }
