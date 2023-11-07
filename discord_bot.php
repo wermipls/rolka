@@ -78,7 +78,7 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
                 -1,
                 $e->url,
                 $e->type == 'rich' ? 'link' : $e->type,
-                $e->color,
+                $e->color ? sprintf("#%06x", $e->color) : null,
                 $e->timestamp ? DateTimeImmutable::createFromMutable($e->timestamp) : null,
                 $provider,
                 $provider_url,
