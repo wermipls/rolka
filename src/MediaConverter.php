@@ -217,10 +217,10 @@ class MediaConverter
 
         $ok = $this->makePng($input, $out_png, $width, $height, true);
 
-        $max_q = 75;
+        $max_q = 95;
         $min_q = 40;
-        $best_q = 75;
-        $prev_q = 75;
+        $best_q = 95;
+        $prev_q = 95;
         $q_size = [];
         for ($i = 10; $i > 0; $i--) {
             $ok = $this->makeJpeg($input, $output, $width, $height, $best_q);
