@@ -332,7 +332,21 @@ class AssetManager
         return $a;
     }
 
-    public function downloadAsset(string $url): ?Asset
+    private function assetTypeFromMime(?string $mime = null): string
+    {
+        if (preg_match("/(.+)\/(.+)/", $mime, $matches)) {
+            switch ($matches[1])
+            {
+            case 'video':
+            case 'image':
+            case 'audio':
+                return $matches[1];
+            }
+        }
+        return 'file';
+    }
+
+    public function downloadAsset(string $url, string $mime = null): ?Asset
     {
         if (!preg_match("/^[Hh][Tt][Tt][Pp][Ss]?:\/\//", $url)) {
             return null;
@@ -365,7 +379,10 @@ class AssetManager
             return $asset;
         }
 
-        $asset = new Asset(-1, 'image', $this->toUrl($fp), null);
+        $mime = $mime ?? $this->conv->getMime($fp);
+        $type = $this->assetTypeFromMime($mime);
+
+        $asset = new Asset(-1, $type, $this->toUrl($fp), null);
 
         $asset->hash = $hash;
         $asset->size = filesize($fp);

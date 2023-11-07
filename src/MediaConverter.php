@@ -11,6 +11,7 @@ class MediaConverter
     private ExecWrapper $pngquant;
     private ExecWrapper $oxipng;
     private ExecWrapper $jpegtran;
+    private ExecWrapper $file;
 
     public function __construct(string $cjpeg_path, string $jpegtran_path)
     {
@@ -21,6 +22,9 @@ class MediaConverter
         $this->oxipng   = new ExecWrapper('oxipng');
         $this->cjpeg    = new ExecWrapper($cjpeg_path);
         $this->jpegtran = new ExecWrapper($jpegtran_path);
+
+        $this->file     = new ExecWrapper('file');
+        $this->file->addArgs(['--mime-type', '-b']);
     }
 
     private function probeStreams(array $extra_args = []): ?object
@@ -340,6 +344,15 @@ class MediaConverter
         default:
             return 'unknown';
         }
+    }
+
+    public function getMime(string $path): ?string
+    {
+        $ret = $this->file->run([$path], $out);
+        if ($ret === 0) {
+            return $out;
+        }
+        return null;
     }
 
     public function optimize(string $input, bool $lossy = false): bool
