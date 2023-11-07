@@ -81,9 +81,13 @@ class MessageRenderer
 
     private function drawAttachment(Asset $att)
     {
+        $type = $att->type;
+        if ($type == 'image' && $att->size > 1024*1024*1 && !$att->thumb_url) {
+            $type = 'file';
+        }
         $url   = $this->assetUrl($att->url);
         $thumb = $this->assetUrl($att->thumb());
-        switch ($att->type) {
+        switch ($type) {
         case 'image':
             echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_attachment msg_element' src='$thumb'></img></a>";
             break;
@@ -105,9 +109,13 @@ class MessageRenderer
 
     private function drawEmbedAsset(Asset $att)
     {
+        $type = $att->type;
+        if ($type == 'image' && $att->size > 1024*1024*1 && !$att->thumb_url) {
+            $type = 'file';
+        }
         $url   = $this->assetUrl($att->url);
         $thumb = $this->assetUrl($att->thumb());
-        switch ($att->type) {
+        switch ($type) {
         case 'image':
             echo "<a href='$url' target='_blank'><img loading='lazy' class='msg_embed_asset' src='$thumb'></img></a>";
             break;
