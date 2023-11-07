@@ -62,7 +62,40 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
             array_push($attachments, $asset);
         }
     }
-    
+
+    $embeds = [];
+
+    if ($msg->embeds) {
+        foreach ($msg->embeds as $e) {
+            $provider = $provider_url = null;
+
+            if ($e->provider) {
+                $provider = $e->provider->name ?? null;
+                $provider_url = $e->provider->url ?? null;
+            }
+
+            $embed = new rolka\Embed(
+                -1,
+                $e->url,
+                $e->type == 'rich' ? 'link' : $e->type,
+                $e->color,
+                $e->timestamp ? DateTimeImmutable::createFromMutable($e->timestamp) : null,
+                $provider,
+                $provider_url,
+                $e->footer ? $e->footer->text : null,
+                $e->footer ? $e->footer->icon_url : null,
+                $e->author ? $e->author->name : null,
+                $e->author ? $e->author->url : null,
+                $e->title,
+                $e->url,
+                $e->description,
+                null,
+                null,
+            );
+            array_push($embeds, $embed);
+        }
+    }
+
     if (!($author = $ctx->getAuthor($msg->author->id))) {
         $author = new rolka\Author(
             $msg->author->id,
@@ -81,7 +114,7 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
         $msg->referenced_message ? $msg->referenced_message->id : null,
         $msg->sticker_items ? $msg->sticker_items->first()->id : null,
         $ctx->insertAttachmentGroup($attachments),
-        null
+        $ctx->insertEmbedGroup($embeds),
     );
 
     // hack... should put stuff on a queue

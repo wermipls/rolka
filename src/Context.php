@@ -144,4 +144,83 @@ class Context
 
         return $group_id;
     }
+
+    public function insertEmbedGroup(Array $embeds): ?int
+    {
+        if (!isset($embeds)) {
+            return null;
+        }
+        $q = $this->db->query("INSERT INTO embed_groups (id) VALUES (NULL)");
+
+        if (!$q) {
+            return null;
+        }
+
+        $group_id = $this->db->lastInsertId();
+
+        foreach ($embeds as $e) {
+            $q = $this->db->prepare(
+               "INSERT INTO embeds
+                (
+                    `group_id`,
+                    `url`,
+                    `type`,
+                    `color`,
+                    `timestamp`,
+                    `footer`,
+                    `footer_url`,
+                    `provider`,
+                    `provider_url`,
+                    `author`,
+                    `author_url`,
+                    `title`,
+                    `title_url`,
+                    `description`,
+                    `embed_url`,
+                    `asset_id`
+                )
+                VALUES
+                (
+                    :group_id,
+                    :url,
+                    :type,
+                    :color,
+                    :timestamp,
+                    :footer,
+                    :footer_url,
+                    :provider,
+                    :provider_url,
+                    :author,
+                    :author_url,
+                    :title,
+                    :title_url,
+                    :description,
+                    :embed_url,
+                    :asset_id
+                )");
+
+            $q->bindValue('group_id', $group_id);
+            $q->bindValue('url', $e->url);
+            $q->bindValue('type', 'link'); // FIXME
+            $q->bindValue('color', $e->color);
+            $q->bindValue('timestamp', $e->timestamp ? $e->timestamp->format("Y-m-d H:i:s") : null);
+            $q->bindValue('footer', $e->footer);
+            $q->bindValue('footer_url', $e->footer_url); 
+            $q->bindValue('provider', $e->provider);
+            $q->bindValue('provider_url', $e->provider_url);
+            $q->bindValue('author', $e->author);
+            $q->bindValue('author_url', $e->author_url);
+            $q->bindValue('title', $e->title);
+            $q->bindValue('title_url', $e->title_url);
+            $q->bindValue('description', $e->description);
+            $q->bindValue('embed_url', $e->embed_url);
+            $q->bindValue('asset_id', $e->asset ? $e->asset->id : null);
+
+            if (!$q->execute()) {
+                return null;
+            }
+        }
+
+        return $group_id;
+    }
 }
