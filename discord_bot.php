@@ -74,6 +74,9 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
                 $provider_url = $e->provider->url ?? null;
             }
 
+            $embed_url = $e->video->url;
+            $asset_url = $embed_url ? null : $e->thumbnail->url;
+
             $embed = new rolka\Embed(
                 -1,
                 $e->url,
@@ -89,8 +92,8 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
                 $e->title,
                 $e->url,
                 $e->description,
-                null,
-                null,
+                $asset_url ? $am->downloadAsset($asset_url) : null,
+                $embed_url
             );
             array_push($embeds, $embed);
         }
