@@ -183,7 +183,7 @@ return array(
     'db_name' => 'my_database',
 
     // bot token
-    'discord_token' => `token here`),
+    'discord_token' => 'token here',
 
     // signing key for asset URLs
     'asset_key' => 'deadbeef',
