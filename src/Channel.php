@@ -119,18 +119,34 @@ class Channel
             $row['replies_to'],
             $row['sticker'],
             $row['attachment_group'],
-            $row['embed_group']
+            $row['embed_group'],
+            $row['webhook_name'],
+            $row['webhook_avatar']
+                ? new Asset(
+                    $row['webhook_avatar'],
+                    'image',
+                    $row['wh_av_url'],
+                    $row['wh_av_thumb_url'])
+                : null
         );
     }
 
     public function fetchMessage(int $id): ?Message
     {
         $s = $this->db->prepare(
-            "SELECT * FROM `{$this->channel}` ch
+            "SELECT
+                ch.*,
+                a.*,
+                av.*,
+                wh_av.url as wh_av_url,
+                wh_av.thumb_url as wh_av_thumb_url
+             FROM `{$this->channel}` ch
              INNER JOIN authors a
              ON ch.author_id = a.id
-             LEFT JOIN assets
-             ON a.avatar_asset = assets.id
+             LEFT JOIN assets av
+             ON a.avatar_asset = av.id
+             LEFT JOIN assets wh_av
+             ON ch.webhook_avatar = wh_av.id
              WHERE ch.id = :id");
         $s->bindParam(':id', $id, PDO::PARAM_INT);
         $s->execute();
@@ -155,7 +171,9 @@ class Channel
                 content,
                 sticker,
                 attachment_group,
-                embed_group
+                embed_group,
+                webhook_name,
+                webhook_avatar
             )
             VALUES
             (
@@ -166,7 +184,9 @@ class Channel
                 :content,
                 :sticker,
                 :attachment_group,
-                :embed_group
+                :embed_group,
+                :webhook_name,
+                :webhook_avatar
             )
             ");
         $s->bindValue(':id', $m->id);
@@ -177,6 +197,8 @@ class Channel
         $s->bindValue(':sticker', $m->sticker);
         $s->bindValue(':attachment_group', $m->attachment);
         $s->bindValue(':embed_group', $m->embed);
+        $s->bindValue(':webhook_name', $m->webhook_name);
+        $s->bindValue(':webhook_avatar', $m->webhook_avatar?->id);
 
         $s->execute();
     }
@@ -184,12 +206,19 @@ class Channel
     public function fetchMessages(int $last_id, int $limit = 0): \Generator
     {
         $select = $this->db->prepare(
-            "SELECT ch.*, a.*, assets.*
+            "SELECT
+                ch.*,
+                a.*,
+                av.*,
+                wh_av.url as wh_av_url,
+                wh_av.thumb_url as wh_av_thumb_url
              FROM `{$this->channel}` ch
              INNER JOIN authors a
              ON ch.author_id = a.id
-             LEFT JOIN assets
-             ON a.avatar_asset = assets.id 
+             LEFT JOIN assets av
+             ON a.avatar_asset = av.id
+             LEFT JOIN assets wh_av
+             ON ch.webhook_avatar = wh_av.id
              WHERE ch.id > :last_id
              ORDER BY ch.id ASC "
              . ($limit ? 'LIMIT :limit' : '')

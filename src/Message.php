@@ -20,6 +20,8 @@ class Message
         public ?string $sticker,
         public ?int $attachment,
         public ?int $embed,
+        public ?string $webhook_name,
+        public ?Asset $webhook_avatar,
     ) {
         if ($author instanceof Author) {
             $this->author_obj = $author;
@@ -51,5 +53,15 @@ class Message
         }
 
         return $this->replies_to_obj;
+    }
+
+    public function authorName(): string
+    {
+        return $this->webhook_name ?? $this->author()->name;
+    }
+
+    public function avatar(): ?string
+    {
+        return $this->webhook_avatar?->thumb() ?? $this->author()->avatarUrl();
     }
 }

@@ -62,15 +62,15 @@ class MessageRenderer
 
 ?>
 <div class='msg_side'>
-    <img class='msg_avi' src='<?php echo $this->assetUrl($msg->author()->avatarUrl()) ?>'></img>
+    <img class='msg_avi' src='<?php echo $this->assetUrl($msg->avatar()) ?>'></img>
 </div>
 <div class='msg_header'>
-    <span class='msg_user'><?php echo $this->parser->parseEmoji($msg->author()->name) ?> </span>
+    <span class='msg_user'><?php echo $this->parser->parseEmoji($msg->authorName()) ?> </span>
     <?php if ($msg->replies_to): ?>
         <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
         <span class='msg_reply'> in response to </span>
         <a class='msg_reply_ref' href='#<?php echo $replies_to->id ?>'>
-            <span class='msg_reply_user'> <?php echo $this->parser->parseEmoji($replies_to->author()->name) ?> </span>
+            <span class='msg_reply_user'> <?php echo $this->parser->parseEmoji($replies_to->authorName()) ?> </span>
             <?php echo $dts ?>
             <br>
             <span class='msg_reply_content'><?php echo $this->parseReply($msg) ?></span>
@@ -271,6 +271,10 @@ class MessageRenderer
             }
 
             if ($this->prev_msg->author != $msg->author) {
+                $show_author = true;
+            }
+
+            if ($msg->webhook_name != $this->prev_msg->webhook_name) {
                 $show_author = true;
             }
         } else {

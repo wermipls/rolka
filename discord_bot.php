@@ -156,6 +156,8 @@ class Bot
             $msg->sticker_items?->first()?->id,
             $this->ctx->insertAttachmentGroup($attachments),
             $this->ctx->insertEmbedGroup($embeds),
+            $is_webhook ? $msg->author->username : null,
+            $is_webhook ? $this->am->downloadAsset($msg->author->avatar) : null
         );
 
         // hack... should put stuff on a queue

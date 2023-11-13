@@ -141,13 +141,17 @@ SET @query = CONCAT(
 `attachment_group` int(11) DEFAULT NULL,
 `embed_group` int(11) DEFAULT NULL,
 `deleted` tinyint(1) NOT NULL DEFAULT 0,
+`webhook_name` tinytext DEFAULT NULL,
+`webhook_avatar` int(11) DEFAULT NULL,
 PRIMARY KEY (`id`),
 KEY `fk_author` (`author_id`),
 KEY `attachment_group` (`attachment_group`),
 KEY `embed_group` (`embed_group`),
+KEY `webhook_avatar` (`webhook_avatar`),
 CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_1', ' FOREIGN KEY (`attachment_group`) REFERENCES `attachment_groups` (`id`),
 CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_2', ' FOREIGN KEY (`embed_group`) REFERENCES `embed_groups` (`id`),
-CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_3', ' FOREIGN KEY (`author_id`) REFERENCES `authors` (`id`)
+CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_3', ' FOREIGN KEY (`author_id`) REFERENCES `authors` (`id`),
+CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_4', ' FOREIGN KEY (`webhook_avatar`) REFERENCES `assets` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ');
 PREPARE query FROM @query;
