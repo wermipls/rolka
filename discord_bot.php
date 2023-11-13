@@ -40,7 +40,7 @@ $discord_logger->pushHandler(
 
 $d = new Discord([
     'token' => $config['discord_token'],
-    'intents' => Intents::getDefaultIntents(),
+    'intents' => Intents::getDefaultIntents() | Intents::MESSAGE_CONTENT,
     'logger' => $discord_logger
 ]);
 
