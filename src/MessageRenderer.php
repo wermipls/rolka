@@ -18,8 +18,12 @@ class MessageRenderer
         $this->timestamp = 0;
     }
 
-    private function assetUrl(string $url): string
+    private function assetUrl(?string $url): string
     {
+        if (!$url) {
+            return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        }
+
         if (isset($this->asset_urls[$url])) {
             return $this->asset_urls[$url];
         }

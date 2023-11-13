@@ -36,11 +36,13 @@ class Context
             $author = new Author(
                 $row['id'],
                 $row['display_name'],
-                new Asset(
-                    $row['avatar_asset'],
-                    'image',
-                    $row['url'],
-                    $row['thumb_url'])
+                $row['avatar_asset']
+                    ? new Asset(
+                        $row['avatar_asset'],
+                        'image',
+                        $row['url'],
+                        $row['thumb_url'])
+                    : null
             );
             $authors[$author->id] = $author;
         }
@@ -72,11 +74,13 @@ class Context
         $author = new Author(
             $row['id'],
             $row['display_name'],
-            new Asset(
-                $row['avatar_asset'],
-                'image',
-                $row['url'],
-                $row['thumb_url'])
+            $row['avatar_asset']
+                ? new Asset(
+                    $row['avatar_asset'],
+                    'image',
+                    $row['url'],
+                    $row['thumb_url'])
+                : null
         );
 
         return $author;
