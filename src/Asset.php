@@ -11,6 +11,7 @@ class Asset
     public bool $is_optimized = false;
     public ?string $original_url = null;
     public ?string $original_hash = null;
+    public ?string $origin_url = null;
 
     public function __construct(
         public int $id,

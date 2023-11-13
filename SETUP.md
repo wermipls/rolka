@@ -50,7 +50,8 @@ CREATE TABLE `assets` (
   `optimized` tinyint(1) DEFAULT 0,
   `og_url` varchar(1024) DEFAULT NULL,
   `og_hash` varchar(64) DEFAULT NULL COMMENT 'xxh128 seed=0 hexadecimal',
-PRIMARY KEY (`id`)
+  `origin_url` text DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `attachments` (

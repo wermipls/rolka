@@ -47,6 +47,7 @@ class AssetManager
             'optimized'  => $a->is_optimized,
             'og_url'     => $a->original_url,
             'og_hash'    => $a->original_hash,
+            'origin_url' => $a->origin_url,
         ] = $row;
 
         return $a;
@@ -283,6 +284,57 @@ class AssetManager
         return null;
     }
 
+    public function canonizeOriginUrl(string $url): string
+    {
+        // Special handling for Discord CDN URLs.
+        // They can have access/timestamp/resolution parameters
+        // and multiple domains (cdn.discordapp.com and media.discordapp.net).
+
+        $match = preg_match(
+            "/^[Hh][Tt][Tt][Pp][Ss]?:\/\/(cdn.discordapp.com|media.discordapp.net)\/attachments\/(\d+)\/(\d+)\/(.+?)(?:[\?\&].*)?$/",
+            $url,
+            $m
+        );
+
+        if ($match) {
+            return "https://cdn.discordapp.com/attachments/{$m[2]}/{$m[3]}/{$m[4]}";
+        }
+
+        return $url;
+    }
+
+    public function getAssetByOrigin(string $origin_url): ?Asset
+    {
+        $origin_url = $this->canonizeOriginUrl($origin_url);
+
+        $q = $this->pdo->prepare(
+           "SELECT * FROM assets
+            WHERE origin_url = :origin_url");
+
+        $q->bindValue('origin_url', $origin_url);
+        $q->execute();
+
+        foreach ($q->fetchAll() as $row) {
+            return $this->mapAsset($row);
+        }
+
+        return null;
+    }
+
+    private function addOriginUrl(Asset $a, $url): bool
+    {
+        $q = $this->pdo->prepare(
+            "UPDATE assets
+             SET origin_url = :origin_url
+             WHERE id = :id AND origin_url IS NULL"
+        );
+
+        $q->bindValue('id', $a->id);
+        $q->bindValue('origin_url', $this->canonizeOriginUrl($url));
+
+        return $q->execute();
+    }
+
     private function insertAsset(Asset $a): ?Asset
     {
         $q = $this->pdo->prepare(
@@ -297,7 +349,8 @@ class AssetManager
                 thumb_hash,
                 optimized,
                 og_url,
-                og_hash
+                og_hash,
+                origin_url
             )
             VALUES
             (
@@ -310,7 +363,8 @@ class AssetManager
                 :thumb_hash,
                 :optimized,
                 :og_url,
-                :og_hash
+                :og_hash,
+                :origin_url
             )");
 
         $q->bindValue('url',        $a->url);
@@ -323,6 +377,7 @@ class AssetManager
         $q->bindValue('optimized',  (int)$a->is_optimized);
         $q->bindValue('size',       $a->size);
         $q->bindValue('og_name',    $a->name);
+        $q->bindValue('origin_url', $a->origin_url);
 
         if (!$q->execute()) {
             return null;
@@ -351,6 +406,12 @@ class AssetManager
         if (!preg_match("/^[Hh][Tt][Tt][Pp][Ss]?:\/\//", $url)) {
             return null;
         }
+
+        $asset = $this->getAssetByOrigin($url);
+        if ($asset) {
+            return $asset;
+        }
+
         $f = fopen($url, "rb");
         if (!$f) {
             return null;
@@ -376,6 +437,7 @@ class AssetManager
         $asset = $this->getAssetByHash($hash);
         if ($asset) {
             unlink($fp);
+            $this->addOriginUrl($asset, $url);
             return $asset;
         }
 
@@ -387,6 +449,7 @@ class AssetManager
         $asset->hash = $hash;
         $asset->size = filesize($fp);
         $asset->name = $name;
+        $asset->origin_url = $this->canonizeOriginUrl($url);
 
         return $this->insertAsset($asset);
     }
