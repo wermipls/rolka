@@ -102,7 +102,7 @@ $mapInsertMessage = function (Message $msg, $mapped_ch) use ($am, $ctx)
     if (!($author = $ctx->getAuthor($msg->author->id))) {
         $author = new rolka\Author(
             $msg->author->id,
-            $msg->author->username,
+            $msg->author->displayname,
             $am->downloadAsset($msg->author->avatar)
         );
         $ctx->insertAuthor($author);
@@ -174,7 +174,7 @@ $fetchWholeHistory = function (Discord $d, int $channel_id, $mapped_ch) use ($ma
     }
 };
 
-$d->on('ready', function (Discord $d) use ($onMsgCreate, $fetchWholeHistory, $mapped_ch) {
+$d->on('init', function (Discord $d) use ($onMsgCreate, $fetchWholeHistory, $mapped_ch) {
     error_log("Hello World!");
 
     $d->on(Event::MESSAGE_CREATE, $onMsgCreate);

@@ -4,7 +4,7 @@
     "require": {
         "erusev/parsedown": "^1.7",
         "astrotomic/php-twemoji": "dev-main",
-        "team-reflex/discord-php": "^7.3",
+        "team-reflex/discord-php": "dev-master",
         "react/async": "^4.1"
     },
     "repositories": [
