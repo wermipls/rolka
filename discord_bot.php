@@ -138,9 +138,11 @@ class Bot
             array_push($embeds, $embed);
         }
 
+        $is_webhook = $msg->webhook_id !== null;
+
         if (!($author = $this->ctx->getAuthor($msg->author->id))) {
             $author = $this->updateAuthor($msg->author);
-        } else {
+        } else if (!$is_webhook)  {
             $this->authors_pending_update[$msg->author->id] = $msg->author;
         }
 
