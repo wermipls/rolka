@@ -160,51 +160,6 @@ class Channel
         return $this->mapMessage($row);
     }
 
-    public function insertMessage(Message $m, bool $ignore_exists = true)
-    {
-        $ignore = $ignore_exists ? 'IGNORE' : '';
-        $s = $this->db->prepare("
-            INSERT $ignore INTO `{$this->channel}`
-            (
-                id,
-                author_id,
-                sent,
-                replies_to,
-                content,
-                sticker,
-                attachment_group,
-                embed_group,
-                webhook_name,
-                webhook_avatar
-            )
-            VALUES
-            (
-                :id,
-                :author_id,
-                :sent,
-                :replies_to,
-                :content,
-                :sticker,
-                :attachment_group,
-                :embed_group,
-                :webhook_name,
-                :webhook_avatar
-            )
-            ");
-        $s->bindValue(':id', $m->id);
-        $s->bindValue(':author_id', $m->author);
-        $s->bindValue(':sent', $m->date->format("Y-m-d H:i:s"));
-        $s->bindValue(':replies_to', $m->replies_to);
-        $s->bindValue(':content', $m->content);
-        $s->bindValue(':sticker', $m->sticker);
-        $s->bindValue(':attachment_group', $m->attachment);
-        $s->bindValue(':embed_group', $m->embed);
-        $s->bindValue(':webhook_name', $m->webhook_name);
-        $s->bindValue(':webhook_avatar', $m->webhook_avatar?->id);
-
-        $s->execute();
-    }
-
     public function fetchMessages(int $last_id, int $limit = 0): \Generator
     {
         $select = $this->db->prepare(
@@ -235,6 +190,71 @@ class Channel
         while ($row = $select->fetch(PDO::FETCH_NAMED)) {
             yield $this->mapMessage($row);
         }
+    }
+
+    public function insertMessage(Message $m, bool $ignore_exists = true)
+    {
+        $ignore = $ignore_exists ? 'IGNORE' : '';
+        $s = $this->db->prepare("
+            INSERT $ignore INTO `{$this->channel}`
+            (
+                id,
+                author_id,
+                sent,
+                replies_to,
+                content,
+                sticker,
+                attachment_group,
+                embed_group,
+                webhook_name,
+                webhook_avatar
+            )
+            VALUES
+            (
+                :id,
+                :author_id,
+                :sent,
+                :replies_to,
+                :content,
+                :sticker,
+                :attachment_group,
+                :embed_group,
+                :webhook_name,
+                :webhook_avatar
+            )
+            ON DUPLICATE KEY UPDATE
+                content = :content,
+                attachment_group = :attachment_group,
+                embed_group = :embed_group
+            ");
+        $s->bindValue(':id', $m->id);
+        $s->bindValue(':author_id', $m->author);
+        $s->bindValue(':sent', $m->date->format("Y-m-d H:i:s"));
+        $s->bindValue(':replies_to', $m->replies_to);
+        $s->bindValue(':content', $m->content);
+        $s->bindValue(':sticker', $m->sticker);
+        $s->bindValue(':attachment_group', $m->attachment);
+        $s->bindValue(':embed_group', $m->embed);
+        $s->bindValue(':webhook_name', $m->webhook_name);
+        $s->bindValue(':webhook_avatar', $m->webhook_avatar?->id);
+
+        $s->execute();
+    }
+
+    public function updateMessageEmbedAttachments(
+        int $msg, ?int $embed_group, ?int $attachment_group
+    ) {
+        $s = $this->db->prepare("
+            UPDATE `{$this->channel}` SET
+                attachment_group = :attachment_group,
+                embed_group = :embed_group
+            WHERE id = :id
+            ");
+        $s->bindValue(':id', $msg);
+        $s->bindValue(':attachment_group', $attachment_group);
+        $s->bindValue(':embed_group', $embed_group);
+
+        $s->execute();
     }
 
     public function isLastMessage(int $id): bool

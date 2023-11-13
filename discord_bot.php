@@ -36,6 +36,14 @@ class Bot
             $this->updatePendingAuthors();
         });
 
+        $d->on(Event::MESSAGE_UPDATE, function (object $msg, Discord $d, ?Message $msg_old) {
+            if ($msg instanceof Message) {
+                $this->mapInsertMessage($msg);
+            } else {
+                $this->updateMessagePartial($msg);
+            }
+        });
+
         $d->on('init', function (Discord $d) {
             error_log("Hello World!");
 
@@ -99,6 +107,37 @@ class Bot
         }
     }
 
+    private function mapEmbed(object $e): rolka\Embed
+    {
+        $embed_url = $e->video?->url ?? null;
+        $asset_url = $embed_url ? null : ($e->thumbnail?->url ?? null);
+        if ($asset_url) {
+            $asset = $this->am->downloadAsset($asset_url);
+        }
+
+        // 🤮🤮🤮
+        $embed = new rolka\Embed(
+            -1,
+            $e->url ?? null,
+            $e->type == 'rich' ? 'link' : $e->type,
+            ($e->color ?? null) ? sprintf("#%06x", $e->color) : null,
+            ($e->timestamp ?? null) ? DateTimeImmutable::createFromMutable($e->timestamp) : null,
+            $e->provider?->name ?? null,
+            $e->provider?->url ?? null,
+            $e->footer?->text ?? null,
+            $e->footer?->icon_url ?? null,
+            $e->author?->name ?? null,
+            $e->author?->url ?? null,
+            $e->title ?? null,
+            $e->url ?? null,
+            $e->description ?? null,
+            $asset,
+            $embed_url
+        );
+
+        return $embed;
+    }
+
     private function mapInsertMessage(Message $msg)
     {
         $ch = $this->channels[$msg->channel_id];
@@ -117,31 +156,7 @@ class Bot
         $embeds = [];
 
         foreach ($msg->embeds as $e) {
-            $embed_url = $e->video->url;
-            $asset_url = $embed_url ? null : $e->thumbnail->url;
-            if ($asset_url) {
-                $asset = $this->am->downloadAsset($asset_url);
-            }
-
-            $embed = new rolka\Embed(
-                -1,
-                $e->url,
-                $e->type == 'rich' ? 'link' : $e->type,
-                $e->color ? sprintf("#%06x", $e->color) : null,
-                $e->timestamp ? DateTimeImmutable::createFromMutable($e->timestamp) : null,
-                $e?->provider?->name,
-                $e?->provider?->url,
-                $e->footer?->text,
-                $e->footer?->icon_url,
-                $e->author?->name,
-                $e->author?->url,
-                $e->title,
-                $e->url,
-                $e->description,
-                $asset_url ? $this->am->downloadAsset($asset_url) : null,
-                $embed_url
-            );
-            array_push($embeds, $embed);
+            array_push($embeds, $this->mapEmbed($e));
         }
 
         $is_webhook = $msg->webhook_id !== null;
@@ -172,6 +187,35 @@ class Bot
         }
 
         $ch->insertMessage($m);
+    }
+
+    private function updateMessagePartial(object $msg)
+    {
+        $ch = $this->channels[$msg->channel_id];
+        if (!$ch) {
+            return;
+        }
+
+        $attachments = [];
+        if (isset($msg->attachments)) {
+            foreach ($msg->attachments as $a) {
+                $asset = $this->am->downloadAsset($a->url);
+                array_push($attachments, $asset);
+            }
+        }
+
+        $embeds = [];
+        if (isset($msg->embeds)) {
+            foreach ($msg->embeds as $e) {
+                array_push($embeds, $this->mapEmbed($e));
+            }
+        }
+
+        $ch->updateMessageEmbedAttachments(
+            $msg->id,
+            $this->ctx->insertEmbedGroup($embeds),
+            $this->ctx->insertAttachmentGroup($attachments)
+        );
     }
 
     private function fetchMessages(Channel $channel, ?int $before): mixed
