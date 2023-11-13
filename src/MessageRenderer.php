@@ -56,6 +56,13 @@ class MessageRenderer
         echo "<div class='msg_date_header'>{$date->format('l, j F Y')}</div>";
     }
 
+    private function drawPlaque(Author $author)
+    {
+        if ($author->type != AuthorType::User) {
+            echo "<span class='plaque'>{$author->type->name()}</span>";
+        }
+    }
+
     private function drawHeader(Message $msg)
     {
         $dts = "<span class='msg_date'>on {$msg->date->format('d.m.Y')}</span>";
@@ -66,6 +73,7 @@ class MessageRenderer
 </div>
 <div class='msg_header'>
     <span class='msg_user'><?php echo $this->parser->parseEmoji($msg->authorName()) ?> </span>
+    <?php $this->drawPlaque($msg->author()) ?>
     <?php if ($msg->replies_to): ?>
         <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
         <span class='msg_reply'> in response to </span>

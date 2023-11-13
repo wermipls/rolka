@@ -107,7 +107,8 @@ class Channel
                     'image',
                     $row['url'],
                     $row['thumb_url'])
-                : null
+                : null,
+            $row['author_type']
         );
 
         return new Message(
@@ -137,6 +138,7 @@ class Channel
             "SELECT
                 ch.*,
                 a.*,
+                a.type as author_type,
                 av.*,
                 wh_av.url as wh_av_url,
                 wh_av.thumb_url as wh_av_thumb_url
@@ -209,6 +211,7 @@ class Channel
             "SELECT
                 ch.*,
                 a.*,
+                a.type as author_type,
                 av.*,
                 wh_av.url as wh_av_url,
                 wh_av.thumb_url as wh_av_thumb_url

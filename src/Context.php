@@ -21,9 +21,7 @@ class Context
 
         $q = $this->db->query(
            "SELECT
-                a.id,
-                a.display_name,
-                a.avatar_asset,
+                a.*,
                 assets.url,
                 assets.thumb_url
             FROM authors a
@@ -42,7 +40,8 @@ class Context
                         'image',
                         $row['url'],
                         $row['thumb_url'])
-                    : null
+                    : null,
+                $row['type']
             );
             $authors[$author->id] = $author;
         }
@@ -55,9 +54,7 @@ class Context
     {
         $q = $this->db->prepare(
            "SELECT
-                a.id,
-                a.display_name,
-                a.avatar_asset,
+                a.*,
                 assets.url,
                 assets.thumb_url
             FROM authors a
@@ -80,7 +77,8 @@ class Context
                     'image',
                     $row['url'],
                     $row['thumb_url'])
-                : null
+                : null,
+            $row['type']
         );
 
         return $author;
@@ -101,13 +99,15 @@ class Context
             (
                 id,
                 display_name,
-                avatar_asset
+                avatar_asset,
+                type
             )
             VALUES
             (
                 :id,
                 :display_name,
-                :avatar_asset
+                :avatar_asset,
+                :type
             )
             ON DUPLICATE KEY UPDATE
                 display_name = :display_name,
@@ -115,6 +115,7 @@ class Context
         $q->bindValue('id', $author->id);
         $q->bindValue('display_name', $author->name);
         $q->bindValue('avatar_asset', $author->avatar_id);
+        $q->bindValue('type', $author->type->value);
 
         if (!$q->execute()) {
             return null;

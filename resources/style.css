@@ -290,6 +290,14 @@ a.nav_pagebtn {
     border-radius: 8px;
 }
 
+.plaque {
+    background-color: color-mix(in hsl, var(--color-bg) 50%, var(--color-accent));
+    border-radius: 5px;
+    padding: 2px 4px;
+    color: var(--color-fg);
+    font-size: 0.8em;
+}
+
 p {
     display: block;
     margin: 0;

@@ -11,6 +11,7 @@ use Discord\WebSockets\Event;
 use Discord\Parts\Channel\Channel;
 use rolka\AssetManager;
 use rolka\Author;
+use rolka\AuthorType;
 use rolka\Context;
 use React\Async;
 use rolka\MediaConverter;
@@ -63,12 +64,17 @@ class Bot
         }
     }
 
-    private function updateAuthor(User $author): ?Author
+    private function updateAuthor(User $author, bool $is_webhook = false): ?Author
     {
         $author = new Author(
             $author->id,
             $author->global_name ?? $author->username,
-            $this->am->downloadAsset($author->avatar)
+            $this->am->downloadAsset($author->avatar),
+            match (true) {
+                $is_webhook     => AuthorType::Webhook,
+                $author->bot    => AuthorType::Bot,
+                default         => AuthorType::User
+            }
         );
         return $this->ctx->insertUpdateAuthor($author);
     }
@@ -141,7 +147,7 @@ class Bot
         $is_webhook = $msg->webhook_id !== null;
 
         if (!($author = $this->ctx->getAuthor($msg->author->id))) {
-            $author = $this->updateAuthor($msg->author);
+            $author = $this->updateAuthor($msg->author, $is_webhook);
         } else if (!$is_webhook)  {
             $this->authors_pending_update[$msg->author->id] = $msg->author;
         }
