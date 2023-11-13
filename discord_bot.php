@@ -5,17 +5,22 @@ include __DIR__.'/vendor/autoload.php';
 use Discord\Discord;
 use Discord\Helpers\Collection;
 use Discord\Parts\Channel\Message;
+use Discord\Parts\User\User;
 use Discord\WebSockets\Intents;
 use Discord\WebSockets\Event;
 use Discord\Parts\Channel\Channel;
 use rolka\AssetManager;
+use rolka\Author;
 use rolka\Context;
 use React\Async;
 use rolka\MediaConverter;
 
 class Bot
 {
+    private const AUTHOR_UPDATE_TIMEOUT = 60;
     private Array $channels = [];
+    private int $authors_last_update = 0;
+    private Array $authors_pending_update = [];
 
     public function __construct(
         private Context $ctx,
@@ -27,6 +32,7 @@ class Bot
 
         $d->on(Event::MESSAGE_CREATE, function ($msg, $d) {
             $this->mapInsertMessage($msg);
+            $this->updatePendingAuthors();
         });
 
         $d->on('init', function (Discord $d) {
@@ -35,6 +41,8 @@ class Bot
             foreach ($this->channels as $id => $channel) {
                 $this->fetchWholeHistory($id);
             }
+
+            $this->updatePendingAuthors();
         });
     }
 
@@ -51,6 +59,36 @@ class Bot
         foreach ($chn as $c) {
             if ($sync_id = $c['sync_channel_id']) {
                 $this->channels[$sync_id] = $this->ctx->getChannel($c['id']);
+            }
+        }
+    }
+
+    private function updateAuthor(User $author): ?Author
+    {
+        $author = new Author(
+            $author->id,
+            $author->global_name ?? $author->username,
+            $this->am->downloadAsset($author->avatar)
+        );
+        return $this->ctx->insertUpdateAuthor($author);
+    }
+
+    private function updatePendingAuthors()
+    {
+        $time = time();
+        $delta = $time - $this->authors_last_update;
+        if ($delta < static::AUTHOR_UPDATE_TIMEOUT) {
+            return;
+        }
+        $this->authors_last_update = $time;
+
+        error_log("Updating authors...");
+
+        foreach ($this->authors_pending_update as $user) {
+            if ($user) {
+                $this->updateAuthor($user);
+                error_log($user->username);
+                unset($this->authors_pending_update[$user->id]);
             }
         }
     }
@@ -101,12 +139,9 @@ class Bot
         }
 
         if (!($author = $this->ctx->getAuthor($msg->author->id))) {
-            $author = new rolka\Author(
-                $msg->author->id,
-                $msg->author->global_name ?? $msg->author->username,
-                $this->am->downloadAsset($msg->author->avatar)
-            );
-            $this->ctx->insertAuthor($author);
+            $author = $this->updateAuthor($msg->author);
+        } else {
+            $this->authors_pending_update[$msg->author->id] = $msg->author;
         }
 
         $m = new rolka\Message(

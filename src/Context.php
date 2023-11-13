@@ -94,7 +94,7 @@ class Context
         return $this->authors[$id] ?? $this->authors[$id] = $this->fetchAuthor($id);
     }
 
-    public function insertAuthor(Author $author): ?Author
+    public function insertUpdateAuthor(Author $author): ?Author
     {
         $q = $this->db->prepare(
            "INSERT INTO authors
@@ -108,7 +108,10 @@ class Context
                 :id,
                 :display_name,
                 :avatar_asset
-            )");
+            )
+            ON DUPLICATE KEY UPDATE
+                display_name = :display_name,
+                avatar_asset = :avatar_asset");
         $q->bindValue('id', $author->id);
         $q->bindValue('display_name', $author->name);
         $q->bindValue('avatar_asset', $author->avatar_id);
