@@ -103,7 +103,7 @@ class Bot
         if (!($author = $this->ctx->getAuthor($msg->author->id))) {
             $author = new rolka\Author(
                 $msg->author->id,
-                $msg->author->displayname,
+                $msg->author->global_name ?? $msg->author->username,
                 $this->am->downloadAsset($msg->author->avatar)
             );
             $this->ctx->insertAuthor($author);
