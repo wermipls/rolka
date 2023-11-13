@@ -131,7 +131,7 @@ class Bot
             $e->title ?? null,
             $e->url ?? null,
             $e->description ?? null,
-            $asset,
+            $asset ?? null,
             $embed_url
         );
 
