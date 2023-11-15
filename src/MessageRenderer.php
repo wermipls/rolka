@@ -184,8 +184,8 @@ class MessageRenderer
             echo "<div class='msg_embed_desc'>{$c}</div>";
         }
         if ($e->embed_url) {
-            echo "<div class='container_16_9'>"
-                ."<iframe class='embed_if' loading='lazy' src='{$e->embed_url}'></iframe>"
+            echo "<div class='container_16_9 ifwrap' onclick='load_iframe(this)'>"
+                ."<iframe class='embed_if' loading='lazy' src='' src_pre='{$e->embed_url}'></iframe>"
                 ."</div>";
         }
         if ($e->asset) {

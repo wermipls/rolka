@@ -252,6 +252,7 @@ a.msg_file {
 .container_16_9 {
     display: inline-block;
     aspect-ratio: 16/9;
+    overflow: hidden;
 }
 
 .embed_if {
@@ -301,4 +302,27 @@ a.nav_pagebtn {
 p {
     display: block;
     margin: 0;
+}
+
+.ifwrap {
+    position: relative;
+}
+.ifwrap:after {
+    content: "[click to load embed]";
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--color-fg-secondary);
+    background-color: var(--color-bg);
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    top: 50%;
+    left: 50%;
+    padding: 100% 64px;
+    transform: translate(-50%, -50%);
+}
+.ifwrap:hover:after {
+    color: var(--color-fg);
+    cursor: pointer;
 }

@@ -5,6 +5,14 @@
 <style>
 <?php include __DIR__ . '/../resources/style.css' ?>
 </style>
+<script>
+    function load_iframe(element) {
+        iframe = element.firstElementChild;
+        iframe.attributes.src.value = iframe.attributes.src_pre.value;
+        element.attributes.onclick.value = null;
+        element.classList.remove('ifwrap');
+    }
+</script>
 </head>
 <body>
 <?php
