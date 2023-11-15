@@ -24,7 +24,7 @@ sudo pacman -S ffmpeg oxipng pngquant gifsicle
 Clone the repository and set up dependencies:
 
 ```sh
-git clone htps://github.com/wermipls/rolka
+git clone https://github.com/wermipls/rolka
 cd rolka
 composer install
 ```
