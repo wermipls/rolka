@@ -11,10 +11,11 @@ class EmojiText extends Twemoji\EmojiText
         $this->base('https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets');
     }
 
-    public function toTag(): string
+    public function toTag(bool $lazy = true): string
     {
+        $lazy = $lazy ? "loading='lazy'" : '';
         return $this->replace(
-            "<img loading='lazy' class='msg_emote' src='%{src}' alt='%{alt}'>"
+            "<img $lazy class='msg_emote' src='%{src}' alt='%{alt}'>"
         );
     }
 }

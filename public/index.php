@@ -24,8 +24,35 @@ require __DIR__ . '/../vendor/autoload.php';
 use rolka\ {
     MessageParser,
     MessageRenderer,
-    Context
+    Context,
+    EmojiText
 };
+function exception_handler(Throwable $exception)
+{
+    ob_end_clean();
+    ob_start();
+
+    $e = (new EmojiText("😢"))->toTag(lazy: false);
+?>
+<div style="position:absolute;top:0;left:0;display:table;width:100%;height:100%;">
+  <div style="display:table-cell;vertical-align:middle;">
+    <div style="margin-left:auto;margin-right:auto;text-align: center;">
+        <div style="font-size:10em"><?php echo $e ?></div>
+        <div style="padding:16px"><i>[failed to render the page]</i></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+<?php
+    ob_end_flush();
+    // rethrow so the error still gets logged
+    throw $exception;
+}
+
+ob_start();
+
+set_exception_handler('exception_handler');
 
 $config = include(__DIR__ . "/../config.php");
 
@@ -56,6 +83,8 @@ foreach ($channel->fetchMessages($origin_id, 250) as $msg) {
     $renderer->draw($msg);
 }
 $renderer->finish();
+
+ob_end_flush();
 ?>
 </body>
 </html>
