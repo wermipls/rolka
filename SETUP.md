@@ -29,150 +29,6 @@ cd rolka
 composer install
 ```
 
-## Database setup
-
-See [ArchWiki](https://wiki.archlinux.org/title/MariaDB) on how to set up and configure MariaDB.
-
-At the current moment, necessary tables need to be created manually as database structure is not fully set in stone. Table create statements are provided below.
-
-Once per database:
-
-```sql
-CREATE TABLE `assets` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `url` varchar(1024) NOT NULL,
-  `og_name` varchar(1024) DEFAULT NULL,
-  `type` enum('image','video','audio','file') DEFAULT NULL,
-  `size` int(11) NOT NULL,
-  `hash` varchar(64) NOT NULL COMMENT 'xxh128 seed=0 hexadecimal',
-  `thumb_url` varchar(1024) DEFAULT NULL,
-  `thumb_hash` varchar(64) DEFAULT NULL COMMENT 'xxh128 seed=0 hexadecimal',
-  `optimized` tinyint(1) DEFAULT 0,
-  `og_url` varchar(1024) DEFAULT NULL,
-  `og_hash` varchar(64) DEFAULT NULL COMMENT 'xxh128 seed=0 hexadecimal',
-  `origin_url` text DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `attachments` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `group_id` int(11) NOT NULL,
-  `asset_id` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `asset_id` (`asset_id`),
-  KEY `group_id` (`group_id`),
-  CONSTRAINT `attachments_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`),
-  CONSTRAINT `attachments_ibfk_2` FOREIGN KEY (`group_id`) REFERENCES `attachment_groups` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `attachment_groups` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `embeds` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `group_id` int(11) NOT NULL,
-  `url` text DEFAULT NULL,
-  `type` enum('link','video','image','gifv') NOT NULL,
-  `color` varchar(128) DEFAULT NULL,
-  `timestamp` datetime DEFAULT NULL,
-  `footer` text DEFAULT NULL,
-  `footer_url` text DEFAULT NULL,
-  `provider` text DEFAULT NULL,
-  `provider_url` text DEFAULT NULL,
-  `author` text DEFAULT NULL,
-  `author_url` text DEFAULT NULL,
-  `title` text DEFAULT NULL,
-  `title_url` text DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `embed_url` text DEFAULT NULL,
-  `asset_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `asset_id` (`asset_id`),
-  KEY `group_id` (`group_id`),
-  CONSTRAINT `embeds_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `embed_groups` (`id`),
-  CONSTRAINT `embeds_ibfk_2` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `embed_groups` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `authors` (
-  `id` bigint(20) NOT NULL,
-  `username` varchar(100) DEFAULT NULL,
-  `discriminator` varchar(4) DEFAULT NULL,
-  `display_name` varchar(100) NOT NULL,
-  `avatar_asset` int(11) DEFAULT NULL,
-  `type` enum('user','bot','webhook') NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `avatar_asset` (`avatar_asset`),
-  CONSTRAINT `authors_ibfk_1` FOREIGN KEY (`avatar_asset`) REFERENCES `assets` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `channels` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `table_name` varchar(64) NOT NULL,
-  `name` varchar(128) NOT NULL,
-  `description` text NOT NULL,
-  `viewable` tinyint(1) NOT NULL,
-  `sync_channel_id` bigint(20) DEFAULT NULL,
-PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-Once per channel (edit the infix and `channels` row values):
-
-```sql
-SET @channel_infix = 'mychannel';
-
-SET @table = CONCAT('ch_', @channel_infix, '_messages');
-SET @query = CONCAT(
-'CREATE TABLE ', @table, ' (
-`id` bigint(20) NOT NULL,
-`author_id` bigint(20) NOT NULL,
-`sent` datetime NOT NULL,
-`modified` datetime DEFAULT NULL,
-`replies_to` bigint(20) DEFAULT NULL,
-`content` text DEFAULT NULL,
-`sticker` bigint(20) DEFAULT NULL,
-`attachment_group` int(11) DEFAULT NULL,
-`embed_group` int(11) DEFAULT NULL,
-`deleted` tinyint(1) NOT NULL DEFAULT 0,
-`webhook_name` tinytext DEFAULT NULL,
-`webhook_avatar` int(11) DEFAULT NULL,
-PRIMARY KEY (`id`),
-KEY `fk_author` (`author_id`),
-KEY `attachment_group` (`attachment_group`),
-KEY `embed_group` (`embed_group`),
-KEY `webhook_avatar` (`webhook_avatar`),
-CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_1', ' FOREIGN KEY (`attachment_group`) REFERENCES `attachment_groups` (`id`),
-CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_2', ' FOREIGN KEY (`embed_group`) REFERENCES `embed_groups` (`id`),
-CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_3', ' FOREIGN KEY (`author_id`) REFERENCES `authors` (`id`),
-CONSTRAINT ', 'ch_', @channel_infix, '_messages_ibfk_4', ' FOREIGN KEY (`webhook_avatar`) REFERENCES `assets` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-');
-PREPARE query FROM @query;
-EXECUTE query;
-DEALLOCATE PREPARE query;
-
-INSERT INTO `channels` (
-  `table_name`,
-  `name`,
-  `description`,
-  `viewable`,
-  `sync_channel_id`
-) VALUES (
-  @channel_infix,
-  'my channel name',
-  'a place for cool people to hang out :)',
-  1,
-  1234567891234567890 -- discord channel ID or NULL if not synced by bot
-);
-```
-
 ## Configuration file
 
 Create `config.php` in the root:
@@ -202,6 +58,29 @@ return array(
 ```
 
 Example config above may not be exhaustive, check the source code (e.g. try `grep -P "config\[(.*?)\]" public/* src/* ./*.php`) for any other possible config entries.
+
+## Database setup
+
+See [ArchWiki](https://wiki.archlinux.org/title/MariaDB) on how to set up and configure MariaDB, if not done already. Make sure the config file is filled with appropriate data.
+
+To handle database table initialization, a simple script is provided:
+
+```sh
+# once per db
+php setup.php init
+# for each channel
+php setup.php channel add \
+    -infix mychannel \
+    -name "my channel name" \
+    -description "a place for cool people to hang out :)" \
+    -sync_channel 1234567891234567890
+```
+
+To migrate from an older database schema (add missing columns, etc):
+
+```sh
+php setup.php upgrade
+```
 
 ## Gathering data
 
