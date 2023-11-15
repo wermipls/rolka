@@ -57,13 +57,13 @@ function setup_db(PDO $db, bool $ignore_exists = true)
         'attachment_groups',
         'embeds',
         'embed_groups',
-        'authors',
         'channels'
     ];
     $if_not_exists = $ignore_exists ? 'IF NOT EXISTS' : '';
     foreach ($tables as $table) {
         $db->query(
-           "CREATE TABLE {$if_not_exists} `{$table}` (`id` int(20) NOT NULL AUTO_INCREMENT)
+           "CREATE TABLE {$if_not_exists} `{$table}`
+            (`id` bigint(20) NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))
             ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
     }
@@ -73,7 +73,7 @@ function setup_db(PDO $db, bool $ignore_exists = true)
             ADD IF NOT EXISTS `url` varchar(1024) NOT NULL,
             ADD IF NOT EXISTS `og_name` varchar(1024) DEFAULT NULL,
             ADD IF NOT EXISTS `type` enum('image','video','audio','file') DEFAULT NULL,
-            ADD IF NOT EXISTS `size` int(11) NOT NULL,
+            ADD IF NOT EXISTS `size` bigint(20) NOT NULL,
             ADD IF NOT EXISTS `hash` varchar(64) NOT NULL,
             ADD IF NOT EXISTS `thumb_url` varchar(1024) DEFAULT NULL,
             ADD IF NOT EXISTS `thumb_hash` varchar(64) DEFAULT NULL,
@@ -86,8 +86,8 @@ function setup_db(PDO $db, bool $ignore_exists = true)
 
     $db->query(
        "ALTER TABLE `attachments`
-            ADD IF NOT EXISTS `group_id` int(11) NOT NULL,
-            ADD IF NOT EXISTS `asset_id` int(11) NOT NULL,
+            ADD IF NOT EXISTS `group_id` bigint(20) NOT NULL,
+            ADD IF NOT EXISTS `asset_id` bigint(20) NOT NULL,
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
             ADD KEY IF NOT EXISTS `asset_id` (`asset_id`),
             ADD KEY IF NOT EXISTS `group_id` (`group_id`),
@@ -97,7 +97,7 @@ function setup_db(PDO $db, bool $ignore_exists = true)
 
     $db->query(
        "ALTER TABLE `embeds`
-            ADD IF NOT EXISTS `group_id` int(11) NOT NULL,
+            ADD IF NOT EXISTS `group_id` bigint(20) NOT NULL,
             ADD IF NOT EXISTS `url` text DEFAULT NULL,
             ADD IF NOT EXISTS `type` enum('link','video','image','gifv') NOT NULL,
             ADD IF NOT EXISTS `color` varchar(128) DEFAULT NULL,
@@ -112,7 +112,7 @@ function setup_db(PDO $db, bool $ignore_exists = true)
             ADD IF NOT EXISTS `title_url` text DEFAULT NULL,
             ADD IF NOT EXISTS `description` text DEFAULT NULL,
             ADD IF NOT EXISTS `embed_url` text DEFAULT NULL,
-            ADD IF NOT EXISTS `asset_id` int(11) DEFAULT NULL,
+            ADD IF NOT EXISTS `asset_id` bigint(20) DEFAULT NULL,
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
             ADD KEY IF NOT EXISTS `asset_id` (`asset_id`),
             ADD KEY IF NOT EXISTS `group_id` (`group_id`),
@@ -143,7 +143,7 @@ function setup_db(PDO $db, bool $ignore_exists = true)
     );
 
     $db->query(
-       "CREATE TABLE {$if_not_exists} `authors` (`id` int(20) NOT NULL)
+       "CREATE TABLE {$if_not_exists} `authors` (`id` bigint(20) NOT NULL)
         ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -152,7 +152,7 @@ function setup_db(PDO $db, bool $ignore_exists = true)
             ADD IF NOT EXISTS `username` varchar(100) DEFAULT NULL,
             ADD IF NOT EXISTS `discriminator` varchar(4) DEFAULT NULL,
             ADD IF NOT EXISTS `display_name` varchar(100) NOT NULL,
-            ADD IF NOT EXISTS `avatar_asset` int(11) DEFAULT NULL,
+            ADD IF NOT EXISTS `avatar_asset` bigint(20) DEFAULT NULL,
             ADD IF NOT EXISTS `type` enum('user','bot','webhook') NOT NULL,
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
             ADD KEY IF NOT EXISTS  `avatar_asset` (`avatar_asset`),
@@ -226,13 +226,13 @@ function channel_add_upgrade(
             ADD IF NOT EXISTS `replies_to` bigint(20) DEFAULT NULL,
             ADD IF NOT EXISTS `content` text DEFAULT NULL,
             ADD IF NOT EXISTS `sticker` bigint(20) DEFAULT NULL,
-            ADD IF NOT EXISTS `attachment_group` int(11) DEFAULT NULL,
-            ADD IF NOT EXISTS `embed_group` int(11) DEFAULT NULL,
+            ADD IF NOT EXISTS `attachment_group` bigint(20) DEFAULT NULL,
+            ADD IF NOT EXISTS `embed_group` bigint(20) DEFAULT NULL,
             ADD IF NOT EXISTS `deleted` tinyint(1) NOT NULL DEFAULT 0,
             ADD IF NOT EXISTS `webhook_name` tinytext DEFAULT NULL,
-            ADD IF NOT EXISTS `webhook_avatar` int(11) DEFAULT NULL,
+            ADD IF NOT EXISTS `webhook_avatar` bigint(20) DEFAULT NULL,
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
-            ADD KEY IF NOT EXISTS `fk_author` (`author_id`),
+            ADD KEY IF NOT EXISTS `author_id` (`author_id`),
             ADD KEY IF NOT EXISTS `attachment_group` (`attachment_group`),
             ADD KEY IF NOT EXISTS `embed_group` (`embed_group`),
             ADD KEY IF NOT EXISTS `webhook_avatar` (`webhook_avatar`),
