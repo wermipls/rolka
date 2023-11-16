@@ -243,8 +243,84 @@ function channel_add_upgrade(
     );
 }
 
+function channel_upgrade_bigint(PDO $db, string $infix) {
+    $alphanumeric = preg_match("/^[A-z\d]+$/", $infix);
+    if (!$alphanumeric) {
+        error_log("error: infix is not alphanumeric");
+        exit(1);
+    }
+
+    $db->query(
+       "ALTER TABLE `ch_{$infix}_messages`
+            DROP FOREIGN KEY IF EXISTS `ch_{$infix}_messages_ibfk_1`,
+            DROP FOREIGN KEY IF EXISTS `ch_{$infix}_messages_ibfk_2`,
+            DROP FOREIGN KEY IF EXISTS `ch_{$infix}_messages_ibfk_3`,
+            DROP FOREIGN KEY IF EXISTS `ch_{$infix}_messages_ibfk_4`"
+    );
+
+    $db->query(
+        "ALTER TABLE `ch_{$infix}_messages`
+            MODIFY COLUMN IF EXISTS `attachment_group` BIGINT(20),
+            MODIFY COLUMN IF EXISTS `embed_group` BIGINT(20),
+            MODIFY COLUMN IF EXISTS `webhook_avatar` BIGINT(20)"
+    );
+}
+
+function upgrade_bigint(PDO $db)
+{
+    $channels = $db->query("SELECT * FROM `channels`");
+    foreach ($channels as $c) {
+        channel_upgrade_bigint($db, $c['table_name']);
+    }
+
+    $db->query(
+       "ALTER TABLE `embeds`
+            DROP FOREIGN KEY IF EXISTS `embeds_ibfk_1`,
+            DROP FOREIGN KEY IF EXISTS `embeds_ibfk_2`"
+    );
+    $db->query(
+       "ALTER TABLE `attachments`
+            DROP FOREIGN KEY IF EXISTS `attachments_ibfk_1`,
+            DROP FOREIGN KEY IF EXISTS `attachments_ibfk_2`"
+    );
+    $db->query(
+       "ALTER TABLE `authors`
+            DROP FOREIGN KEY IF EXISTS `authors_ibfk_1`"
+    );
+    $db->query(
+       "ALTER TABLE `authors`
+            MODIFY COLUMN `avatar_asset` BIGINT(20)"
+    );
+    $db->query(
+       "ALTER TABLE `assets`
+            MODIFY COLUMN `id` BIGINT(20) NOT NULL AUTO_INCREMENT"
+    );
+    $db->query(
+       "ALTER TABLE `attachments`
+            MODIFY COLUMN `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+            MODIFY COLUMN `group_id` BIGINT(20),
+            MODIFY COLUMN `asset_id` BIGINT(20)"
+    );
+    $db->query(
+       "ALTER TABLE `embeds`
+            MODIFY COLUMN `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+            MODIFY COLUMN `group_id` BIGINT(20),
+            MODIFY COLUMN `asset_id` BIGINT(20)"
+    );
+    $db->query(
+       "ALTER TABLE `embed_groups`
+            MODIFY COLUMN `id` BIGINT(20) NOT NULL AUTO_INCREMENT"
+    );
+    $db->query(
+       "ALTER TABLE `attachment_groups`
+            MODIFY COLUMN `id` BIGINT(20) NOT NULL AUTO_INCREMENT"
+    );
+}
+
 function upgrade_db(PDO $db)
 {
+    upgrade_bigint($db);
+
     setup_db($db, true);
 
     $channels = $db->query("SELECT * FROM `channels`");
