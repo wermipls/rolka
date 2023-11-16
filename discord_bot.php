@@ -109,8 +109,26 @@ class Bot
 
     private function mapEmbed(object $e): rolka\Embed
     {
+        // some very interesting stuff going on, observed experimentally:
+        //   'image', 'article' -> thumbnail is the image (image is empty?)
+        //   'link', 'rich' -> thumbnail is an icon in top-right
+        //   'gifv', 'video' -> thumbnail is a thumbnail
+        // not sure if this is a discord api thing,
+        // or just some fuckery in the library i'm using.
+        // this requires some special handling
+
         $embed_url = $e->video?->url ?? null;
-        $asset_url = $embed_url ? null : ($e->thumbnail?->url ?? null);
+
+        $asset_url = $e->image?->url ?? null;
+        if ($e->type == 'image' || $e->type == 'article') {
+            $asset_url = $asset_url ?? ($e->thumbnail?->url ?? null);
+        }
+
+        // there's no actual thumbnail handling yet, so we discard it
+        if ($embed_url) {
+            $asset_url == null;
+        }
+
         if ($asset_url) {
             $asset = $this->am->downloadAsset($asset_url);
         }
@@ -125,7 +143,7 @@ class Bot
             $e->provider?->name ?? null,
             $e->provider?->url ?? null,
             $e->footer?->text ?? null,
-            $e->footer?->icon_url ?? null,
+            null, // no such thing as a "footer url" lol
             $e->author?->name ?? null,
             $e->author?->url ?? null,
             $e->title ?? null,
