@@ -16,7 +16,15 @@ class Markdown extends Parsedown
     {
         $this->ctx = $context;
 
-        $this->InlineTypes['<'] = ['Mention', 'Emoticon', 'Timestamp', 'SpecialCharacter'];
+        $this->InlineTypes['<'] = [
+            'Mention',
+            'Channel',
+            'Role',
+            'Emoticon',
+            'Timestamp',
+            'NoEmbedLink',
+            'SpecialCharacter',
+        ];
         $this->InlineTypes['|'] = ['Spoiler'];
         $this->inlineMarkerList .= '|';
     }
@@ -35,6 +43,53 @@ class Markdown extends Parsedown
                     ),
                 ),
             );
+        }
+    }
+
+    protected function inlineChannel($excerpt)
+    {
+        if (preg_match('/^<#(\d+)>/', $excerpt['text'], $matches)) {
+            $name = 'unknown-channel';
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'span',
+                    'text' => "#" . $name,
+                    'attributes' => array(
+                        'class' => 'msg_ping',
+                    ),
+                ),
+            );
+        }
+    }
+
+    protected function inlineRole($excerpt)
+    {
+        if (preg_match('/^<@&(\d+)>/', $excerpt['text'], $matches)) {
+            $name = 'Unknown Role';
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'span',
+                    'text' => "@" . $name,
+                    'attributes' => array(
+                        'class' => 'msg_ping',
+                    ),
+                ),
+            );
+        }
+    }
+
+    protected function inlineNoEmbedLink($excerpt)
+    {
+        if (preg_match('/^<.+?(:.+?)>/', $excerpt['text'], $matches)) {
+            $excerpt['text'] = $matches[1];
+            $inline = $this->inlineUrl($excerpt);
+            if ($inline) {
+                $inline['extent'] += 2;
+                $inline['position'] -= 1;
+                return $inline;
+            }
         }
     }
 
