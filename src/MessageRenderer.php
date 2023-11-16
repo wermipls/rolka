@@ -149,7 +149,7 @@ class MessageRenderer
 
     private function drawEmbed(Embed $e)
     {
-        $has_rich_box = $e->type == 'link';
+        $has_rich_box = $e->hasRichContent();
         $color = $e->color ?? 'var(--color-fg-secondary)';
  
         if ($has_rich_box) echo "<div class='msg_embed' style='border-left: 4px solid {$color}'>";

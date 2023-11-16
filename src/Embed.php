@@ -23,4 +23,18 @@ class Embed
         public ?string $embed_url,
     ) {
     }
+
+    public function hasRichContent(): bool
+    {
+        if ($this->timestamp
+         || $this->footer
+         || $this->footer_url
+         || $this->author
+         || $this->author_url
+         || $this->title
+         || $this->description) {
+            return true;
+        }
+        return false;
+    }
 }
