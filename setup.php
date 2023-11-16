@@ -91,8 +91,8 @@ function setup_db(PDO $db, bool $ignore_exists = true)
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
             ADD KEY IF NOT EXISTS `asset_id` (`asset_id`),
             ADD KEY IF NOT EXISTS `group_id` (`group_id`),
-            ADD FOREIGN KEY IF NOT EXISTS (`asset_id`) REFERENCES `assets` (`id`),
-            ADD FOREIGN KEY IF NOT EXISTS (`group_id`) REFERENCES `attachment_groups` (`id`)"
+            ADD CONSTRAINT `attachments_ibfk_1` FOREIGN KEY IF NOT EXISTS (`asset_id`) REFERENCES `assets` (`id`),
+            ADD CONSTRAINT `attachments_ibfk_2` FOREIGN KEY IF NOT EXISTS (`group_id`) REFERENCES `attachment_groups` (`id`)"
     );
 
     $db->query(
@@ -116,8 +116,8 @@ function setup_db(PDO $db, bool $ignore_exists = true)
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
             ADD KEY IF NOT EXISTS `asset_id` (`asset_id`),
             ADD KEY IF NOT EXISTS `group_id` (`group_id`),
-            ADD FOREIGN KEY IF NOT EXISTS (`group_id`) REFERENCES `embed_groups` (`id`),
-            ADD FOREIGN KEY IF NOT EXISTS (`asset_id`) REFERENCES `assets` (`id`)"
+            ADD CONSTRAINT `embeds_ibfk_1` FOREIGN KEY IF NOT EXISTS (`group_id`) REFERENCES `embed_groups` (`id`),
+            ADD CONSTRAINT `embeds_ibfk_2` FOREIGN KEY IF NOT EXISTS (`asset_id`) REFERENCES `assets` (`id`)"
     );
 
     $db->query(
@@ -156,7 +156,7 @@ function setup_db(PDO $db, bool $ignore_exists = true)
             ADD IF NOT EXISTS `type` enum('user','bot','webhook') NOT NULL,
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
             ADD KEY IF NOT EXISTS  `avatar_asset` (`avatar_asset`),
-            ADD FOREIGN KEY IF NOT EXISTS (`avatar_asset`) REFERENCES `assets` (`id`)"
+            ADD CONSTRAINT `authors_ibfk_1` FOREIGN KEY IF NOT EXISTS (`avatar_asset`) REFERENCES `assets` (`id`)"
      );
 }
 
@@ -236,10 +236,10 @@ function channel_add_upgrade(
             ADD KEY IF NOT EXISTS `attachment_group` (`attachment_group`),
             ADD KEY IF NOT EXISTS `embed_group` (`embed_group`),
             ADD KEY IF NOT EXISTS `webhook_avatar` (`webhook_avatar`),
-            ADD FOREIGN KEY IF NOT EXISTS (`attachment_group`) REFERENCES `attachment_groups` (`id`),
-            ADD FOREIGN KEY IF NOT EXISTS (`embed_group`) REFERENCES `embed_groups` (`id`),
-            ADD FOREIGN KEY IF NOT EXISTS (`author_id`) REFERENCES `authors` (`id`),
-            ADD FOREIGN KEY IF NOT EXISTS (`webhook_avatar`) REFERENCES `assets` (`id`)"
+            ADD CONSTRAINT `ch_{$infix}_messages_ibfk_1` FOREIGN KEY IF NOT EXISTS (`attachment_group`) REFERENCES `attachment_groups` (`id`),
+            ADD CONSTRAINT `ch_{$infix}_messages_ibfk_2` FOREIGN KEY IF NOT EXISTS (`embed_group`) REFERENCES `embed_groups` (`id`),
+            ADD CONSTRAINT `ch_{$infix}_messages_ibfk_3` FOREIGN KEY IF NOT EXISTS (`author_id`) REFERENCES `authors` (`id`),
+            ADD CONSTRAINT `ch_{$infix}_messages_ibfk_4` FOREIGN KEY IF NOT EXISTS (`webhook_avatar`) REFERENCES `assets` (`id`)"
     );
 }
 
