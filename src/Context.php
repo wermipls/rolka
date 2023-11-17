@@ -131,9 +131,19 @@ class Context
 
     public function insertAttachmentGroup(Array $assets): ?int
     {
+        if (empty($assets)) {
+            return null;
+        }
+        if ($this->db->beginTransaction() === false) {
+            error_log(__FUNCTION__.': failed to begin transaction...');
+            return null;
+        }
+
         $q = $this->db->query("INSERT INTO attachment_groups (id) VALUES (NULL)");
 
         if (!$q) {
+            error_log(__FUNCTION__.': failed to insert group...');
+            $this->db->rollBack();
             return null;
         }
 
@@ -146,21 +156,30 @@ class Context
                 VALUES
                 (?, ?)");
             if (!$q->execute([$group_id, $a->id])) {
+                error_log(__FUNCTION__.': failed to insert, rolling back...');
+                $this->db->rollBack();
                 return null;
             }
         }
 
+        $this->db->commit();
         return $group_id;
     }
 
     public function insertEmbedGroup(Array $embeds): ?int
     {
-        if (!isset($embeds)) {
+        if (empty($embeds)) {
+            return null;
+        }
+        if ($this->db->beginTransaction() === false) {
+            error_log(__FUNCTION__.': failed to begin transaction...');
             return null;
         }
         $q = $this->db->query("INSERT INTO embed_groups (id) VALUES (NULL)");
 
         if (!$q) {
+            error_log(__FUNCTION__.': failed to insert group...');
+            $this->db->rollBack();
             return null;
         }
 
@@ -225,10 +244,13 @@ class Context
             $q->bindValue('asset_id', $e->asset ? $e->asset->id : null);
 
             if (!$q->execute()) {
+                error_log(__FUNCTION__.': failed to insert, rolling back...');
+                $this->db->rollBack();
                 return null;
             }
         }
 
+        $this->db->commit();
         return $group_id;
     }
 }
