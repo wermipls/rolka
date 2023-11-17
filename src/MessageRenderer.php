@@ -45,8 +45,12 @@ class MessageRenderer
 
     private function parseReply(Message $msg): string
     {
+        $replies_to = $msg->repliesTo();
+        if (is_null($replies_to)) {
+            return '[original message unavailable]';
+        }
         return strip_tags(
-            $this->parse($msg->repliesTo()),
+            $this->parse($replies_to),
             "<img><br>"
         );
     }
@@ -78,7 +82,7 @@ class MessageRenderer
         <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
         <span class='msg_reply'> in response to </span>
         <a class='msg_reply_ref' href='#<?php echo $replies_to->id ?>'>
-            <span class='msg_reply_user'> <?php echo $this->parser->parseEmoji($replies_to->authorName()) ?> </span>
+            <span class='msg_reply_user'> <?php echo $this->parser->parseEmoji($replies_to?->authorName() ?? 'unknown') ?> </span>
             <?php echo $dts ?>
             <br>
             <span class='msg_reply_content'><?php echo $this->parseReply($msg) ?></span>
