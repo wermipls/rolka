@@ -33,8 +33,7 @@ class Embed
 
     public function hasRichContent(): bool
     {
-        if ($this->timestamp
-         || $this->footer
+        if ($this->footer
          || $this->footer_url
          || $this->author
          || $this->author_url
