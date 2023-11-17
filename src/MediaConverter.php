@@ -215,46 +215,12 @@ class MediaConverter
         $out_png = $output . '.png';
         $output  = $output . '.jpg';
 
-        $ok = $this->makePng($input, $out_png, $width, $height, true);
+        $this->makePng($input, $out_png, $width, $height, true);
 
-        $max_q = 95;
-        $min_q = 40;
-        $best_q = 95;
-        $prev_q = 95;
-        $q_size = [];
-        for ($i = 10; $i > 0; $i--) {
-            $ok = $this->makeJpeg($input, $output, $width, $height, $best_q);
-            if (!$ok) {
-                return null;
-            }
-
-            clearstatcache();
-            $size = filesize($output);
-
-            error_log("$output $i: $size (target q: {$best_q})");
-
-            if ($prev_q > $best_q && $q_size[$prev_q] < $size) {
-                error_log("previous q=$prev_q had smaller size...");
-                $best_q = $prev_q;
-                $i = 2;
-                continue;
-            }
-
-            $q_size[$best_q] = $size;
-            $prev_q = $best_q;
-
-            if ($size > $max_size_bytes) {
-                $max_q = $best_q;
-                $target_q = ceil(($min_q + $best_q) / 2.0);
-            } else {
-                $min_q = $best_q;
-                $target_q = ceil(($max_q + $best_q) / 2.0);
-            }
-
-            if ($target_q == $best_q) {
-                break;
-            }
-            $best_q = $target_q;
+        $ok = $this->makeJpeg($input, $output, $width, $height, 70);
+        $size = filesize($output);
+        if (!$ok) {
+            return null;
         }
 
         $size_png = filesize($out_png);
