@@ -229,7 +229,7 @@ class Channel
             ");
         $s->bindValue(':id', $m->id);
         $s->bindValue(':author_id', $m->author);
-        $s->bindValue(':sent', $m->date->format("Y-m-d H:i:s"));
+        $s->bindValue(':sent', DateHelper::toDB($m->date));
         $s->bindValue(':replies_to', $m->replies_to);
         $s->bindValue(':content', $m->content);
         $s->bindValue(':sticker', $m->sticker);

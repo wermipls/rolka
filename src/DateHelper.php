@@ -23,6 +23,11 @@ class DateHelper
         return new DateTimeImmutable($t, new DateTimeZone("UTC"));
     }
 
+    public static function toDB(?DateTimeInterface $dt)
+    {
+        return $dt ? $dt->format("Y-m-d H:i:s") : null;
+    }
+
     public static function totalMinutes(DateInterval $d)
     {
         return $d->i

@@ -211,7 +211,7 @@ class Context
             $q->bindValue('url', $e->url);
             $q->bindValue('type', 'link'); // FIXME
             $q->bindValue('color', $e->color);
-            $q->bindValue('timestamp', $e->timestamp ? $e->timestamp->format("Y-m-d H:i:s") : null);
+            $q->bindValue('timestamp', DateHelper::toDB($e->timestamp));
             $q->bindValue('footer', $e->footer);
             $q->bindValue('footer_url', $e->footer_url); 
             $q->bindValue('provider', $e->provider);
