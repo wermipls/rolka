@@ -1,15 +1,19 @@
 <?php
 
 namespace rolka;
+use DateTimeImmutable;
+use DateTimeInterface;
 
 class Embed
 {
+    public ?DateTimeImmutable $timestamp = null;
+
     public function __construct(
         public int $id,
         public ?string $url,
         public string $type,
         public ?string $color,
-        public ?\DateTimeImmutable $timestamp,
+        ?DateTimeInterface $timestamp,
         public ?string $provider,
         public ?string $provider_url,
         public ?string $footer,
@@ -22,6 +26,9 @@ class Embed
         public ?Asset $asset,
         public ?string $embed_url,
     ) {
+        if ($timestamp) {
+            $this->timestamp = DateTimeImmutable::createFromInterface($timestamp);
+        }
     }
 
     public function hasRichContent(): bool

@@ -2,6 +2,7 @@
 
 namespace rolka;
 use DateTimeImmutable;
+use DateTimeInterface;
 
 class Message
 {
@@ -9,12 +10,13 @@ class Message
     public readonly ?int $replies_to;
     private ?Author $author_obj = null;
     private ?Message $replies_to_obj = null;
+    public DateTimeImmutable $date;
 
     public function __construct(
         public Channel $channel,
         public int $id,
         Author|int $author,
-        public DateTimeImmutable $date,
+        DateTimeInterface $date,
         public ?string $content,
         int|Message|null $replies_to,
         public ?string $sticker,
@@ -23,6 +25,8 @@ class Message
         public ?string $webhook_name,
         public ?Asset $webhook_avatar,
     ) {
+        $this->date = DateTimeImmutable::createFromInterface($date);
+
         if ($author instanceof Author) {
             $this->author_obj = $author;
             $this->author = $author->id;
