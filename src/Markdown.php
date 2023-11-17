@@ -26,28 +26,7 @@ class Markdown extends Parsedown
             'SpecialCharacter',
         ];
         $this->InlineTypes['|'] = ['Spoiler'];
-        $this->InlineTypes['#'] = ['Header'];
-        $this->inlineMarkerList .= '|#';
-    }
-
-    protected function inlineHeader($excerpt)
-    {
-        if (preg_match('/^(##?#?) (.+)\n?/m', $excerpt['context'], $matches, PREG_OFFSET_CAPTURE)) {
-            $text = $matches[2][0];
-            return array(
-                'extent' => strlen($matches[0][0]),
-                'offset' => $matches[0][1],
-                'element' => array(
-                    'handler' => 'line',
-                    'name' => match ($matches[1][0]) {
-                        '#'   => 'h1',
-                        '##'  => 'h2',
-                        '###' => 'h3',
-                    },
-                    'text' => $text,
-                ),
-            );
-        }
+        $this->inlineMarkerList .= '|';
     }
 
     protected function inlineMention($excerpt)

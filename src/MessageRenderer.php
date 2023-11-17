@@ -239,7 +239,7 @@ class MessageRenderer
 
     private function isEmojiOnly(string $parsed_content): bool
     {
-        if (trim(strip_tags($parsed_content, '<h1><h2><h3>')) === '') {
+        if (trim(strip_tags($parsed_content)) === '') {
             return true;
         }
         return false;
