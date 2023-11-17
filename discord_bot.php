@@ -280,7 +280,7 @@ $config = include(__DIR__.'/config.php');
 $db_opts = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING,
 ];
-$db = new PDO(
+$db = new pine3ree\PDO\Reconnecting\PDO(
     "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
     $config['db_user'], $config['db_pass'], $db_opts);
 

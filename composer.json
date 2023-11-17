@@ -5,7 +5,8 @@
         "erusev/parsedown": "^1.7",
         "astrotomic/php-twemoji": "dev-main",
         "team-reflex/discord-php": "dev-master",
-        "react/async": "^4.1"
+        "react/async": "^4.1",
+        "pine3ree/pine3ree-pdo": "^3.0"
     },
     "repositories": [
         {

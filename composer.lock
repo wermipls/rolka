@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b761d4f9ff0a81e994ac44c642300b88",
+    "content-hash": "52c82299f95facf4f107e028188203ce",
     "packages": [
         {
             "name": "astrotomic/php-twemoji",
@@ -652,6 +652,60 @@
                 }
             ],
             "time": "2023-09-25T11:31:05+00:00"
+        },
+        {
+            "name": "pine3ree/pine3ree-pdo",
+            "version": "3.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pine3ree/pine3ree-pdo.git",
+                "reference": "fa67479d72c8ee39dfbd13867ee81edefa2d8eb6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pine3ree/pine3ree-pdo/zipball/fa67479d72c8ee39dfbd13867ee81edefa2d8eb6",
+                "reference": "fa67479d72c8ee39dfbd13867ee81edefa2d8eb6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-pdo": "*",
+                "php": "~8.0.0 || ~8.1.0 || ~8.2.0"
+            },
+            "conflict": {
+                "pine3ree/p3-pdo": "*"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.10",
+                "phpstan/phpstan-strict-rules": "^1.5",
+                "phpunit/phpunit": "^9.6.13",
+                "squizlabs/php_codesniffer": "^3.7"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [],
+                "psr-4": {
+                    "pine3ree\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "A tiny PDO wrapper for lazy instantiation and query profiling",
+            "homepage": "https://github.com/pine3ree/pine3ree-pdo",
+            "keywords": [
+                "database",
+                "lazy-pdo",
+                "pdo",
+                "pine3ree"
+            ],
+            "support": {
+                "docs": "https://github.com/pine3ree/pine3ree-pdo/blob/3.0.x/README.md",
+                "issues": "https://github.com/pine3ree/pine3ree-pdo/issues",
+                "license": "https://github.com/pine3ree/pine3ree-pdo/blob/3.0.x/LICENSE.md",
+                "source": "https://github.com/pine3ree/pine3ree-pdo"
+            },
+            "time": "2023-10-05T13:29:51+00:00"
         },
         {
             "name": "psr/clock",
