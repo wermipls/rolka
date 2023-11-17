@@ -133,13 +133,19 @@ class Bot
             $asset = $this->am->downloadAsset($asset_url);
         }
 
+        $timestamp = $e->timestamp ?? null;
+
+        if (!($timestamp instanceof DateTimeInterface)) {
+            $timestamp = new DateTime($timestamp);
+        }
+
         // 🤮🤮🤮
         $embed = new rolka\Embed(
             -1,
             $e->url ?? null,
             $e->type == 'rich' ? 'link' : $e->type,
             ($e->color ?? null) ? sprintf("#%06x", $e->color) : null,
-            $e->timestamp ?? null,
+            $timestamp,
             $e->provider?->name ?? null,
             $e->provider?->url ?? null,
             $e->footer?->text ?? null,
