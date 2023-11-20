@@ -281,14 +281,31 @@ a.msg_file {
     margin: 6px 0;
 }
 
-a.nav_pagebtn {
-    display: block;
+.nav_pagebtn {
+    display: inline-block;
     padding: 12px;
     font-weight: bold;
     background-color: var(--color-bg-secondary);
     text-align: center;
-    margin-top: 12px;
     border-radius: 8px;
+    min-width: calc(1.2em + 24px);
+}
+
+.nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 0;
+    align-items: baseline;
+}
+
+.navp {
+    margin: 24px 0;
+}
+
+.flex {
+    flex: 1;
 }
 
 .plaque {

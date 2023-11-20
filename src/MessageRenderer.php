@@ -309,19 +309,48 @@ class MessageRenderer
     $this->prev_msg = $msg;
     }
 
-    private function drawNextButton(int $id)
+    private function drawPageButton(string $text, int $page, bool $flex = false)
     {
-        echo "<a class='nav_pagebtn' href='/?c={$this->channel->id}&from={$id}'>Next page</a>";
+        $flex = $flex ? ' flex' : '';
+        $ref = "/?c={$this->channel->id}&page={$page}";
+        echo "<a class='nav_pagebtn{$flex}' href='{$ref}'>{$text}</a>";
     }
-    public function finish()
+
+    public function drawPageControls(int $msg_count, int $page, int $limit)
     {
-        if (!$this->prev_msg) {
-            return; // nothing to finalize
+        $page_last = intdiv($msg_count, $limit) + (($msg_count % $limit) != 0) - 1;
+
+        $pagination_first = max([$page - 2, 0]);
+        $pagination_last  = min([$page + 2, $page_last]);
+
+        echo "<div class='navp'>";
+        echo "<div class='nav'>";
+        if ($page > 0) {
+            $this->drawPageButton("Previous page", $page-1, flex: true);
         }
-        if ($this->channel->isLastMessage($this->prev_msg->id)) {
-            return;
+        if ($page < $page_last) {
+            $this->drawPageButton("Next page", $page+1, flex: true);
+        }
+        echo "</div>";
+
+        echo "<div class='nav'>";
+        if ($pagination_first != 0) {
+            $this->drawPageButton('«', 0);
         }
 
-        $this->drawNextButton($this->prev_msg->id);
+        for ($i = $pagination_first; $i <= $pagination_last; $i++) {
+            if ($page == $i) {
+                $t = $i+1;
+                echo "<span class='nav_pagebtn'>{$t}</span>";
+            } else {
+                $this->drawPageButton($i+1, $i);
+            }
+        }
+
+        if ($pagination_last != $page_last) {
+            $this->drawPageButton('»', $page_last);
+        }
+        echo "</div>";
+        echo "</div>";
     }
 }

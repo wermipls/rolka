@@ -70,19 +70,27 @@ $ctx->getAuthors();
 
 $channel_id = filter_input(INPUT_GET, 'c', FILTER_VALIDATE_INT);
 
-$origin_id = filter_input(INPUT_GET, 'from', FILTER_VALIDATE_INT);
-if (!$origin_id) {
-    $origin_id = 0;
+$page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT);
+if (!$page) {
+    $page = 0;
 }
 
 $channel = $ctx->getChannel($channel_id);
 $parser = new MessageParser($ctx);
 $renderer = new MessageRenderer($parser, $channel, $config['asset_key']);
 
-foreach ($channel->fetchMessages($origin_id, 250) as $msg) {
+$limit = 250;
+$msg_count = $channel->getMessageCount();
+
+if ($page * $limit > $msg_count) {
+    $page = 0;
+}
+
+foreach ($channel->fetchMessages(0, $limit, $page) as $msg) {
     $renderer->draw($msg);
 }
-$renderer->finish();
+
+$renderer->drawPageControls($msg_count, $page, $limit);
 
 ob_end_flush();
 ?>

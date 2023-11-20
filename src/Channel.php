@@ -160,7 +160,7 @@ class Channel
         return $this->mapMessage($row);
     }
 
-    public function fetchMessages(int $last_id, int $limit = 0): \Generator
+    public function fetchMessages(int $last_id, int $limit = 0, int $page = 0): \Generator
     {
         $select = $this->db->prepare(
             "SELECT
@@ -179,17 +179,25 @@ class Channel
              ON ch.webhook_avatar = wh_av.id
              WHERE ch.id > :last_id
              ORDER BY ch.id ASC "
-             . ($limit ? 'LIMIT :limit' : '')
+             . ($limit ? 'LIMIT :offset, :limit' : '')
             );
         $select->bindParam(':last_id', $last_id, PDO::PARAM_INT);
         if ($limit) {
             $select->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $select->bindValue(':offset', $page * $limit, PDO::PARAM_INT);
         }
         $select->execute();
 
         while ($row = $select->fetch(PDO::FETCH_NAMED)) {
             yield $this->mapMessage($row);
         }
+    }
+
+    public function getMessageCount(): int
+    {
+        $q = $this->db->query("SELECT COUNT(*) FROM `{$this->channel}`");
+        $fetch = $q->fetch();
+        return $fetch[0] ?? 0;
     }
 
     public function insertMessage(Message $m, bool $ignore_exists = true)
