@@ -107,6 +107,41 @@ class Bot
         }
     }
 
+    private function getUrlHeader(string $url): Array
+    {
+        $c = curl_init();
+        curl_setopt_array($c, [
+            CURLOPT_URL => $url,
+            CURLOPT_HEADER => 1,
+            CURLOPT_NOBODY => 1,
+            CURLOPT_RETURNTRANSFER => 1
+        ]);
+
+        $header = [];
+
+        $result = explode("\n", trim(curl_exec($c)));
+        foreach ($result as $line) {
+            if (preg_match("/^([\w-]+): (.*)/", $line, $matches)) {
+                $header[strtolower($matches[1])] = $matches[2];
+            }
+        }
+
+        return $header;
+    }
+
+    private function isVideo(string $url): ?bool
+    {
+        $header = $this->getUrlHeader($url);
+        if (isset($header['content-type'])) {
+            if (str_starts_with($header['content-type'], 'video')) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return null;
+    }
+
     private function mapEmbed(object $e): rolka\Embed
     {
         // some very interesting stuff going on, observed experimentally:
@@ -117,9 +152,20 @@ class Bot
         // or just some fuckery in the library i'm using.
         // this requires some special handling
 
+        // "video" url can be either an actual video or an embed iframe,
+        // which we need to determine somehow. i attempt to crawl the url
+        // to determine the mime type
         $embed_url = $e->video?->url ?? null;
+        if ($embed_url) {
+            $is_video = $this->isVideo($embed_url);
 
-        $asset_url = $e->image?->url ?? null;
+            if ($is_video) {
+                $asset_url = $embed_url;
+                $embed_url = null;
+            }
+        }
+
+        $asset_url = $asset_url ?? ($e->image?->url ?? null);
         if ($e->type == 'image' || $e->type == 'article') {
             $asset_url = $asset_url ?? ($e->thumbnail?->url ?? null);
         }
@@ -131,6 +177,9 @@ class Bot
 
         if ($asset_url) {
             $asset = $this->am->downloadAsset($asset_url);
+        }
+        if (isset($asset)) {
+            $this->am->generateThumbnail($asset->id);
         }
 
         $timestamp = $e->timestamp ?? null;
