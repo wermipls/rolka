@@ -138,7 +138,8 @@ class Channel
                     'image',
                     $row['wh_av_url'],
                     $row['wh_av_thumb_url'])
-                : null
+                : null,
+            DateHelper::fromDB($row['modified']),
         );
     }
 
@@ -219,6 +220,7 @@ class Channel
                 id,
                 author_id,
                 sent,
+                modified,
                 replies_to,
                 content,
                 sticker,
@@ -232,6 +234,7 @@ class Channel
                 :id,
                 :author_id,
                 :sent,
+                :modified,
                 :replies_to,
                 :content,
                 :sticker,
@@ -241,6 +244,7 @@ class Channel
                 :webhook_avatar
             )
             ON DUPLICATE KEY UPDATE
+                modified = :modified,
                 content = :content,
                 attachment_group = :attachment_group,
                 embed_group = :embed_group
@@ -248,6 +252,7 @@ class Channel
         $s->bindValue(':id', $m->id);
         $s->bindValue(':author_id', $m->author);
         $s->bindValue(':sent', DateHelper::toDB($m->date));
+        $s->bindValue(':modified', DateHelper::toDB($m->modified));
         $s->bindValue(':replies_to', $m->replies_to);
         $s->bindValue(':content', $m->content);
         $s->bindValue(':sticker', $m->sticker);

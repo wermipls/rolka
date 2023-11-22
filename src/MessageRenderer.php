@@ -266,6 +266,12 @@ class MessageRenderer
     <?php if ($msg->content): ?>
         <div class='msg_content msg_element <?php echo $class_big ?>'>
             <?php echo $parsed ?>
+            <?php
+            if ($msg->modified) {
+                $mf = $msg->modified->format('H:i, d.m.Y');
+                echo "<span title='edited on {$mf}'class='msg_edited'>(edited)</span>";
+            }
+            ?>
         </div>
     <?php endif; ?>
     <?php $this->drawAttachments($msg) ?>

@@ -262,7 +262,8 @@ class Bot
             $this->ctx->insertAttachmentGroup($attachments),
             $this->ctx->insertEmbedGroup($embeds),
             $is_webhook ? $msg->author->username : null,
-            $is_webhook ? $this->am->downloadAsset($msg->author->avatar) : null
+            $is_webhook ? $this->am->downloadAsset($msg->author->avatar) : null,
+            $msg->edited_timestamp
         );
 
         // hack... should put stuff on a queue

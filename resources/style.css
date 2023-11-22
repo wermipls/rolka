@@ -205,6 +205,11 @@ a, a:hover, a:visited, a:active {
     height: 3em;
 }
 
+.msg_edited {
+    font-style: italic;
+    color: var(--color-fg-secondary);
+}
+
 .msg_date_header {
     overflow: hidden;
     text-align: center;

@@ -11,6 +11,7 @@ class Message
     private ?Author $author_obj = null;
     private ?Message $replies_to_obj = null;
     public DateTimeImmutable $date;
+    public ?DateTimeImmutable $modified = null;
 
     public function __construct(
         public Channel $channel,
@@ -24,8 +25,12 @@ class Message
         public ?int $embed,
         public ?string $webhook_name,
         public ?Asset $webhook_avatar,
+        ?DateTimeInterface $modified,
     ) {
         $this->date = DateTimeImmutable::createFromInterface($date);
+        if ($modified) {
+            $this->modified = DateTimeImmutable::createFromInterface($modified);
+        }
 
         if ($author instanceof Author) {
             $this->author_obj = $author;
