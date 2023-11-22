@@ -81,7 +81,7 @@ class MessageRenderer
     <?php if ($msg->replies_to): ?>
         <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
         <span class='msg_reply'> in response to </span>
-        <a class='msg_reply_ref' href='#<?php echo $replies_to->id ?>'>
+        <a class='msg_reply_ref' href='#<?php echo $msg->replies_to ?>'>
             <span class='msg_reply_user'> <?php echo $this->parser->parseEmoji($replies_to?->authorName() ?? 'unknown') ?> </span>
             <?php echo $dts ?>
             <br>
