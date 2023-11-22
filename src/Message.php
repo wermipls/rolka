@@ -68,4 +68,16 @@ class Message
     {
         return $this->webhook_avatar?->thumb() ?? $this->author()->avatarUrl();
     }
+
+    public function isEmpty(): bool
+    {
+        if ($this->content
+         || $this->sticker
+         || $this->attachment
+         || $this->embed
+        ) {
+            return false;
+        }
+        return true;
+    }
 }

@@ -259,7 +259,9 @@ class Bot
             $this->am->generateThumbnail($a->id);
         }
 
-        $ch->insertMessage($m);
+        if (!$m->isEmpty()) {
+            $ch->insertMessage($m);
+        }
     }
 
     private function updateMessagePartial(object $msg)
