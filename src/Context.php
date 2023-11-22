@@ -204,7 +204,8 @@ class Context
                     `title_url`,
                     `description`,
                     `embed_url`,
-                    `asset_id`
+                    `asset_id`,
+                    `icon_asset`
                 )
                 VALUES
                 (
@@ -223,7 +224,8 @@ class Context
                     :title_url,
                     :description,
                     :embed_url,
-                    :asset_id
+                    :asset_id,
+                    :icon_asset
                 )");
 
             $q->bindValue('group_id', $group_id);
@@ -242,6 +244,7 @@ class Context
             $q->bindValue('description', $e->description);
             $q->bindValue('embed_url', $e->embed_url);
             $q->bindValue('asset_id', $e->asset ? $e->asset->id : null);
+            $q->bindValue('icon_asset', $e->icon ? $e->icon->id : null);
 
             if (!$q->execute()) {
                 error_log(__FUNCTION__.': failed to insert, rolling back...');

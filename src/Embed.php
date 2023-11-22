@@ -25,6 +25,7 @@ class Embed
         public ?string $description,
         public ?Asset $asset,
         public ?string $embed_url,
+        public ?Asset $icon
     ) {
         if ($timestamp) {
             $this->timestamp = DateTimeImmutable::createFromInterface($timestamp);

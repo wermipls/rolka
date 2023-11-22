@@ -157,6 +157,8 @@ class MessageRenderer
         $color = $e->color ?? 'var(--color-fg-secondary)';
  
         if ($has_rich_box) echo "<div class='msg_embed' style='border-left: 4px solid {$color}'>";
+        echo "<div class='embed_begin'>";
+        echo "<div class='embed_begin_content'>";
         if ($e->author) {
             if ($e->author_url) {
                 echo "<div class='msg_embed_author'>"
@@ -187,6 +189,11 @@ class MessageRenderer
             $c = $this->parser->parse($e->description);
             echo "<div class='msg_embed_desc'>{$c}</div>";
         }
+        echo "</div>";
+        if ($e->icon) {
+            echo "<div class='embed_side'><img class='embed_icon' src='{$this->assetUrl($e->icon->thumb())}'></div>";
+        }
+        echo "</div>";
         if ($e->embed_url) {
             echo "<div class='container_16_9 ifwrap' onclick='load_iframe(this)'>"
                 ."<iframe class='embed_if' loading='lazy' src='' src_pre='{$e->embed_url}'></iframe>"

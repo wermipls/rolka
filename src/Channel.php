@@ -61,10 +61,15 @@ class Channel
                     `e`.*,
                     `a`.`url` AS `asset_url`,
                     `a`.`type` AS `asset_type`,
-                    `a`.`thumb_url` AS `asset_thumb`
+                    `a`.`thumb_url` AS `asset_thumb`,
+                    `a2`.`url` AS `icon_url`,
+                    `a2`.`type` AS `icon_type`,
+                    `a2`.`thumb_url` AS `icon_thumb`
                  FROM `embeds` `e`
                  LEFT JOIN `assets` `a`
                  ON `a`.`id` = `e`.`asset_id`
+                 LEFT JOIN `assets` `a2`
+                 ON `a2`.`id` = `e`.`icon_asset`
                  WHERE `e`.`group_id` = :id");
             $embed_query->bindParam(':id', $msg->embed, PDO::PARAM_INT);
             $embed_query->execute();
@@ -89,7 +94,12 @@ class Channel
                                                 $eq['asset_url'],
                                                 $eq['asset_thumb'])
                                     : null,
-                    $eq['embed_url']
+                    $eq['embed_url'],
+                    $eq['icon_asset'] ? new Asset($eq['icon_asset'],
+                                                  $eq['icon_type'],
+                                                  $eq['icon_url'],
+                                                  $eq['icon_thumb'])
+                                      : null
                 );
                 yield $e;
             }

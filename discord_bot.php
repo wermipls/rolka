@@ -170,6 +170,12 @@ class Bot
             $asset_url = $asset_url ?? ($e->thumbnail?->url ?? null);
         }
 
+        if ($e->type == 'link' || $e->type == 'rich') {
+            $icon_url = $e->thumbnail?->url;
+        } else {
+            $icon_url = null;
+        }
+
         // there's no actual thumbnail handling yet, so we discard it
         if ($embed_url) {
             $asset_url == null;
@@ -180,6 +186,13 @@ class Bot
         }
         if (isset($asset)) {
             $this->am->generateThumbnail($asset->id);
+        }
+
+        if ($icon_url) {
+            $icon = $this->am->downloadAsset($icon_url);
+        }
+        if (isset($icon)) {
+            $this->am->generateThumbnail($icon->id);
         }
 
         $timestamp = $e->timestamp ?? null;
@@ -205,7 +218,8 @@ class Bot
             $e->url ?? null,
             $e->description ?? null,
             $asset ?? null,
-            $embed_url
+            $embed_url,
+            $icon ?? null
         );
 
         return $embed;

@@ -113,11 +113,14 @@ function setup_db(PDO $db, bool $ignore_exists = true)
             ADD IF NOT EXISTS `description` text DEFAULT NULL,
             ADD IF NOT EXISTS `embed_url` text DEFAULT NULL,
             ADD IF NOT EXISTS `asset_id` bigint(20) DEFAULT NULL,
+            ADD IF NOT EXISTS `icon_asset` bigint(20) DEFAULT NULL,
             ADD PRIMARY KEY IF NOT EXISTS (`id`),
             ADD KEY IF NOT EXISTS `asset_id` (`asset_id`),
             ADD KEY IF NOT EXISTS `group_id` (`group_id`),
+            ADD KEY IF NOT EXISTS `icon_asset` (`icon_asset`),
             ADD CONSTRAINT `embeds_ibfk_1` FOREIGN KEY IF NOT EXISTS (`group_id`) REFERENCES `embed_groups` (`id`),
-            ADD CONSTRAINT `embeds_ibfk_2` FOREIGN KEY IF NOT EXISTS (`asset_id`) REFERENCES `assets` (`id`)"
+            ADD CONSTRAINT `embeds_ibfk_2` FOREIGN KEY IF NOT EXISTS (`asset_id`) REFERENCES `assets` (`id`),
+            ADD CONSTRAINT `embeds_ibfk_3` FOREIGN KEY IF NOT EXISTS (`icon_asset`) REFERENCES `assets` (`id`)"
     );
 
     $db->query(

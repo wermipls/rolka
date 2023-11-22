@@ -281,6 +281,20 @@ a.msg_file {
     margin: 6px 0;
 }
 
+.embed_icon {
+    margin: 6px 0;
+    width: 40px;
+    border-radius: 8px;
+}
+
+.embed_begin {
+    display: flex;
+}
+
+.embed_side {
+    margin-left: 12px;
+}
+
 .nav_pagebtn {
     display: inline-block;
     padding: 12px;
