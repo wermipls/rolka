@@ -245,6 +245,7 @@ class Channel
             )
             ON DUPLICATE KEY UPDATE
                 modified = :modified,
+                replies_to = :replies_to,
                 content = :content,
                 attachment_group = :attachment_group,
                 embed_group = :embed_group

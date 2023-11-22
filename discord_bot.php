@@ -257,7 +257,7 @@ class Bot
             $author,
             $msg->timestamp,
             $msg->content,
-            $msg->referenced_message?->id,
+            $msg->message_reference?->message_id,
             $msg->sticker_items?->first()?->id,
             $this->ctx->insertAttachmentGroup($attachments),
             $this->ctx->insertEmbedGroup($embeds),
