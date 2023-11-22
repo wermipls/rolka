@@ -196,10 +196,11 @@ class MessageRenderer
         echo "</div>";
         if ($e->embed_url) {
             echo "<div class='container_16_9 ifwrap' onclick='load_iframe(this)'>"
+                ."<img class='embed_thumb' src='{$this->assetUrl($e?->asset?->thumb())}'>"
                 ."<iframe class='embed_if' loading='lazy' src='' src_pre='{$e->embed_url}'></iframe>"
                 ."</div>";
         }
-        if ($e->asset) {
+        if ($e->asset && !$e->embed_url) {
             if ($has_rich_box) {
                 $this->drawEmbedAsset($e->asset);
             } else {

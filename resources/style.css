@@ -343,8 +343,8 @@ p {
     text-align: center;
     font-size: 1.5em;
     font-weight: bold;
-    color: var(--color-fg-secondary);
-    background-color: var(--color-bg);
+    color: color-mix(in srgb, var(--color-fg) 80%, transparent);
+    background-color: color-mix(in srgb, var(--color-bg) 75%, transparent);
     position: absolute;
     z-index: 1;
     width: 100%;
@@ -356,4 +356,12 @@ p {
 .ifwrap:hover:after {
     color: var(--color-fg);
     cursor: pointer;
+}
+
+.embed_thumb {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: var(--color-bg);
 }

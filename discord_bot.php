@@ -166,7 +166,9 @@ class Bot
         }
 
         $asset_url = $asset_url ?? ($e->image?->url ?? null);
-        if ($e->type == 'image' || $e->type == 'article') {
+        if ($e->type == 'image'
+         || $e->type == 'article'
+         || $e->type == 'video') {
             $asset_url = $asset_url ?? ($e->thumbnail?->url ?? null);
         }
 
@@ -174,11 +176,6 @@ class Bot
             $icon_url = $e->thumbnail?->url;
         } else {
             $icon_url = null;
-        }
-
-        // there's no actual thumbnail handling yet, so we discard it
-        if ($embed_url) {
-            $asset_url == null;
         }
 
         if ($asset_url) {

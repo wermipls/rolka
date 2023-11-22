@@ -7,6 +7,7 @@
 </style>
 <script>
     function load_iframe(element) {
+        element.firstElementChild.remove();
         iframe = element.firstElementChild;
         iframe.attributes.src.value = iframe.attributes.src_pre.value;
         element.attributes.onclick.value = null;
