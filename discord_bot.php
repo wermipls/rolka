@@ -236,7 +236,7 @@ class Bot
 
         if (!($author = $this->ctx->getAuthor($msg->author->id))) {
             $author = $this->updateAuthor($msg->author, $is_webhook);
-        } else if (!$is_webhook)  {
+        } else if (!$is_webhook) {
             $this->authors_pending_update[$msg->author->id] = $msg->author;
         }
 
