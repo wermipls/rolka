@@ -140,6 +140,7 @@ class Channel
                     $row['wh_av_thumb_url'])
                 : null,
             DateHelper::fromDB($row['modified']),
+            $row['deleted'],
         );
     }
 
@@ -171,8 +172,14 @@ class Channel
         return $this->mapMessage($row);
     }
 
-    public function fetchMessages(int $last_id, int $limit = 0, int $page = 0): \Generator
-    {
+    public function fetchMessages(
+        int $last_id,
+        int $limit = 0,
+        int $page = 0,
+        ?int $before = null
+    ): \Generator {
+        $q_before = ($before !== null) ? 'AND ch.id < :before' : '';
+        $q_limit = $limit ? 'LIMIT :offset, :limit' : '';
         $select = $this->db->prepare(
             "SELECT
                 ch.*,
@@ -189,10 +196,14 @@ class Channel
              LEFT JOIN assets wh_av
              ON ch.webhook_avatar = wh_av.id
              WHERE ch.id > :last_id
-             ORDER BY ch.id ASC "
-             . ($limit ? 'LIMIT :offset, :limit' : '')
+             {$q_before}
+             ORDER BY ch.id ASC
+             {$q_limit}"
             );
         $select->bindParam(':last_id', $last_id, PDO::PARAM_INT);
+        if ($before !== null) {
+            $select->bindParam(':before', $before, PDO::PARAM_INT);
+        }
         if ($limit) {
             $select->bindParam(':limit', $limit, PDO::PARAM_INT);
             $select->bindValue(':offset', $page * $limit, PDO::PARAM_INT);
@@ -277,6 +288,23 @@ class Channel
         $s->bindValue(':id', $msg);
         $s->bindValue(':attachment_group', $attachment_group);
         $s->bindValue(':embed_group', $embed_group);
+
+        $s->execute();
+    }
+
+    public function markDeleted(Message|int $msg, bool $deleted = true)
+    {
+        if ($msg instanceof Message) {
+            $msg = $msg->id;
+        }
+
+        $s = $this->db->prepare("
+            UPDATE `{$this->channel}` SET
+                deleted = :deleted
+            WHERE id = :id
+            ");
+        $s->bindValue(':id', $msg);
+        $s->bindValue(':deleted', $deleted ? 1 : 0);
 
         $s->execute();
     }

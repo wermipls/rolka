@@ -44,6 +44,16 @@ class Bot
             }
         });
 
+        $d->on(Event::MESSAGE_DELETE, function (object $msg) {
+            $this->markDeleted($msg);
+        });
+
+        $d->on(Event::MESSAGE_DELETE_BULK, function (Collection $messages) {
+            foreach ($messages as $msg) {
+                $this->markDeleted($msg);
+            } 
+        });
+
         $d->on('init', function (Discord $d) {
             error_log("Hello World!");
 
@@ -263,7 +273,8 @@ class Bot
             $this->ctx->insertEmbedGroup($embeds),
             $is_webhook ? $msg->author->username : null,
             $is_webhook ? $this->am->downloadAsset($msg->author->avatar) : null,
-            $msg->edited_timestamp
+            $msg->edited_timestamp,
+            false,
         );
 
         // hack... should put stuff on a queue
@@ -305,6 +316,40 @@ class Bot
         );
     }
 
+    private function markDeleted(object $msg)
+    {
+        $ch = $this->channels[$msg->channel_id];
+        if (!$ch) {
+            return;
+        }
+
+        $ch->markDeleted((int)$msg->id);
+    }
+
+    private function findMarkDeletedMessages(
+        Collection $messages,
+        int $channel_id,
+        ?int $last_id
+    ) {
+        $message_ids = [];
+        if ($last_id) {
+            array_push($message_ids, $last_id);
+        }
+        foreach ($messages as $m) {
+            array_push($message_ids, (int)$m->id);
+        }
+        $max = max($message_ids);
+        $min = min($message_ids);
+
+        $ch = $this->channels[$channel_id];
+        foreach ($ch->fetchMessages($min, before: $max) as $m) {
+            $id = $m->id;
+            if (!in_array($id, $message_ids, true)) {
+                $ch->markDeleted($m);
+            }
+        }
+    }
+
     private function fetchMessages(Channel $channel, ?int $before): mixed
     {
         error_log(__FUNCTION__ .": last id $before");
@@ -332,6 +377,8 @@ class Bot
             foreach ($messages as $msg) {
                 $this->mapInsertMessage($msg);
             }
+
+            $this->findMarkDeletedMessages($messages, $channel_id, $last_id);
 
             $last_id = $messages->last()?->id;
         } while ($last_id);

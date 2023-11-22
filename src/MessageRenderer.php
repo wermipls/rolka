@@ -13,7 +13,8 @@ class MessageRenderer
     public function __construct(
         private MessageParser $parser,
         private Channel $channel,
-        private string $asset_key
+        private string $asset_key,
+        private bool $show_deleted = true,
     ) {
         $this->timestamp = 0;
     }
@@ -45,7 +46,7 @@ class MessageRenderer
 
     private function parseReply(Message $msg): string
     {
-        $replies_to = $msg->repliesTo();
+        $replies_to = $msg->repliesTo($this->show_deleted);
         if (is_null($replies_to)) {
             return '[original message unavailable]';
         }
@@ -79,7 +80,7 @@ class MessageRenderer
     <span class='msg_user'><?php echo $this->parser->parseEmoji($msg->authorName()) ?> </span>
     <?php $this->drawPlaque($msg->author()) ?>
     <?php if ($msg->replies_to): ?>
-        <?php $replies_to = $this->channel->fetchMessage($msg->replies_to); ?>
+        <?php $replies_to = $msg->repliesTo($this->show_deleted); ?>
         <span class='msg_reply'> in response to </span>
         <a class='msg_reply_ref' href='#<?php echo $msg->replies_to ?>'>
             <span class='msg_reply_user'> <?php echo $this->parser->parseEmoji($replies_to?->authorName() ?? 'unknown') ?> </span>
@@ -271,6 +272,9 @@ class MessageRenderer
                 $mf = $msg->modified->format('H:i, d.m.Y');
                 echo "<span title='edited on {$mf}'class='msg_edited'>(edited)</span>";
             }
+            if ($msg->deleted) {
+                echo "<span class='msg_edited'>(deleted)</span>";
+            }
             ?>
         </div>
     <?php endif; ?>
@@ -284,6 +288,10 @@ class MessageRenderer
 
     public function draw(Message $msg)
     {
+        if (!$this->show_deleted && $msg->deleted) {
+            return;
+        }
+
         $show_author = false;
         if ($this->prev_msg) {
             if (DateHelper::isDifferentDay($this->prev_msg->date, $msg->date)) {

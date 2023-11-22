@@ -26,6 +26,7 @@ class Message
         public ?string $webhook_name,
         public ?Asset $webhook_avatar,
         ?DateTimeInterface $modified,
+        public ?bool $deleted = null,
     ) {
         $this->date = DateTimeImmutable::createFromInterface($date);
         if ($modified) {
@@ -55,10 +56,14 @@ class Message
         return $this->author_obj;
     }
 
-    public function repliesTo(): ?Message
+    public function repliesTo(bool $return_deleted = true): ?Message
     {
         if ($this->replies_to && !$this->replies_to_obj) {
             $this->replies_to_obj = $this->channel->fetchMessage($this->replies_to);
+        }
+
+        if ($this->replies_to_obj?->deleted && !$return_deleted) {
+            return null;
         }
 
         return $this->replies_to_obj;
