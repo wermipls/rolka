@@ -20,7 +20,7 @@ class ExecWrapper
      * Returns the exit code or `false` on error.
      */
     public function run(
-        array $extra_args = [], &$stdout = null, &$stderr = null): int|false
+        array $extra_args = [], &$stdout = null, &$stderr = null, &$stdin = null): int|false
     {
         $cmd = escapeshellarg($this->program);
         foreach ([...$this->args, ...$extra_args] as $a) {
@@ -30,6 +30,7 @@ class ExecWrapper
         $cmd .= '; echo $? >&3'; 
 
         $proc = proc_open($cmd, [
+            0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
             3 => ['pipe', 'w']
@@ -39,6 +40,8 @@ class ExecWrapper
             return false;
         }
 
+        fwrite($pipes[0], $stdin);
+        fclose($pipes[0]);
         $stdout = stream_get_contents($pipes[1]);
         fclose($pipes[1]);
         $stderr = stream_get_contents($pipes[2]);

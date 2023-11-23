@@ -99,15 +99,15 @@ class MediaConverter
             ];
         }
 
-        $args = [...$args, '-y', '/tmp/tmp.bmp']; // HACK
+        $args = [...$args, '-c:v', 'bmp', '-f', 'rawvideo', '-'];
 
-        $ret = $this->ffmpeg->run($args);
+        $ret = $this->ffmpeg->run($args, stdout: $ffmpeg_out, stderr: $stderr);
         if ($ret !== 0) {
             error_log(__FUNCTION__.": failed to run ffmpeg! exit code: {$ret}");
             return false;
         }
 
-        $ret = $this->cjpeg->run(['-quality', $quality, '/tmp/tmp.bmp'], $stdout);
+        $ret = $this->cjpeg->run(['-quality', $quality], $stdout, stdin: $ffmpeg_out);
         if ($ret !== 0) {
             error_log(__FUNCTION__.": failed to mozjpeg {$output}... exit code {$ret}");
         }
