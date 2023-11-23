@@ -50,10 +50,21 @@ class MessageRenderer
         if (is_null($replies_to)) {
             return '[original message unavailable]';
         }
-        return strip_tags(
-            $this->parse($replies_to),
-            "<img><br>"
-        );
+        $contents = [strip_tags($this->parse($replies_to), "<img><br>")];
+
+        if ($replies_to->attachment) {
+            array_push($contents, '[attachment]');
+        }
+
+        if ($replies_to->embed) {
+            array_push($contents, "[embed]");
+        }
+
+        if ($replies_to->sticker) {
+            array_push($contents, "[sticker]");
+        }
+
+        return implode(' ', $contents);
     }
 
     private function drawDateHeader(DateTimeInterface $date)
