@@ -57,11 +57,13 @@ class Bot
         $d->on('init', function (Discord $d) {
             error_log("Hello World!");
 
-            foreach ($this->channels as $id => $channel) {
-                $this->fetchWholeHistory($id);
-            }
+            React\Async\async(function () {
+                foreach ($this->channels as $id => $channel) {
+                    $this->fetchWholeHistory($id);
+                }
 
-            $this->updatePendingAuthors();
+                $this->updatePendingAuthors();
+            })();
         });
     }
 
