@@ -164,6 +164,19 @@ class Markdown extends Parsedown
         return $text;
     }
 
+    protected function paragraph($line)
+    {
+        $block = array(
+            'element' => array(
+                'name' => 'span',
+                'text' => $line['text'],
+                'handler' => 'line',
+            ),
+        );
+
+        return $block;
+    }
+
     protected function inlineMention($excerpt)
     {
         if (preg_match('/^<@(\d+)>/', $excerpt['text'], $matches)) {
