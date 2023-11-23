@@ -10,12 +10,12 @@ class MessageParser
     {
         $this->markdown = new Markdown($context);
         $this->markdown->setSafeMode(true);
-        $this->markdown->setBreaksEnabled(true);
+        $this->markdown->setBreaksEnabled(false);
     }
 
     public function parse(string $content): string
     {
-        $content = $this->markdown->line($content);
+        $content = $this->markdown->text($content);
         $content = (new EmojiText($content))->toTag();
         return $content;
     }

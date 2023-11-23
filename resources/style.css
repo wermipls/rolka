@@ -78,6 +78,10 @@ a, a:hover, a:visited, a:active {
     min-width: 0;
 }
 
+.msg_content span {
+    white-space: pre-wrap;
+}
+
 .msg_element {
     margin-bottom: 5px;
 }
@@ -141,6 +145,7 @@ a, a:hover, a:visited, a:active {
     overflow-wrap: anywhere;
     color: color-mix(in lch, var(--color-bg) 25%, var(--color-fg));
     font-style: italic;
+    white-space: pre-wrap;
 }
 
 .msg {
@@ -270,15 +275,18 @@ a.msg_file {
 .msg_embed_title {
     font-weight: bold;
     margin: 6px 0;
+    white-space: pre-wrap;
 }
 
 .msg_embed_author {
     font-weight: bold;
     margin: 6px 0;
+    white-space: pre-wrap;
 }
 
 .msg_embed_desc {
     margin: 6px 0;
+    white-space: pre-wrap;
 }
 
 .msg_embed_footer {
@@ -369,4 +377,8 @@ p {
     height: 100%;
     object-fit: cover;
     background-color: var(--color-bg);
+}
+
+h1, h2, h3 {
+    margin: 0.5em 0;
 }

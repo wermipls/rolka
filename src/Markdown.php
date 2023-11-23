@@ -27,6 +27,141 @@ class Markdown extends Parsedown
         ];
         $this->InlineTypes['|'] = ['Spoiler'];
         $this->inlineMarkerList .= '|';
+
+        $this->BlockTypes = array(
+            '#' => array('Header'),
+            '`' => array('FencedCode'),
+        );
+
+        $this->EmRegex['*'] = '/^[*]\b((?:\\\\\*|[^*]|[*][*][^*]+?[*][*])+?)[*](?![*])/s';
+    }
+
+    protected function lines(array $lines)
+    {
+        $cur_blk = null;
+
+        foreach ($lines as $line) {
+            if (strpos($line, "\t") !== false) {
+                $parts = explode("\t", $line);
+
+                $line = $parts[0];
+
+                unset($parts[0]);
+
+                foreach ($parts as $part) {
+                    $shortage = 4 - mb_strlen($line, 'utf-8') % 4;
+
+                    $line .= str_repeat(' ', $shortage);
+                    $line .= $part;
+                }
+            }
+
+            $indent = 0;
+
+            while (isset($line[$indent]) and $line[$indent] === ' ') {
+                $indent++;
+            }
+
+            $text = $line;
+
+            $Line = array('body' => $line, 'indent' => $indent, 'text' => $text);
+
+            if (isset($cur_blk['continuable'])) {
+                $block = $this->{'block' . $cur_blk['type'] . 'Continue'}($Line, $cur_blk);
+
+                if (isset($block)) {
+                    $cur_blk = $block;
+
+                    continue;
+                } else {
+                    if ($this->isBlockCompletable($cur_blk['type'])) {
+                        $cur_blk = $this->{'block' . $cur_blk['type'] . 'Complete'}($cur_blk);
+                    }
+                }
+            }
+
+            $marker = $text[0];
+
+            $blk_types = $this->unmarkedBlockTypes;
+
+            if (isset($this->BlockTypes[$marker])) {
+                foreach ($this->BlockTypes[$marker] as $type) {
+                    $blk_types[] = $type;
+                }
+            }
+
+            foreach ($blk_types as $type) {
+                $block = $this->{'block' . $type}($Line, $cur_blk);
+
+                if (isset($block)) {
+                    $block['type'] = $type;
+
+                    if (!isset($block['identified'])) {
+                        $blocks[] = $cur_blk;
+
+                        $block['identified'] = true;
+                    }
+
+                    if ($this->isBlockContinuable($type)) {
+                        $block['continuable'] = true;
+                    }
+
+                    $cur_blk = $block;
+
+                    continue 2;
+                }
+            }
+
+            if (isset($cur_blk)
+                and !isset($cur_blk['type'])
+                and !isset($cur_blk['interrupted'])
+            ) {
+                $cur_blk['element']['text'] .= "\n" . $text;
+            } else {
+                $blocks[] = $cur_blk;
+
+                $cur_blk = $this->paragraph($Line);
+
+                $cur_blk['identified'] = true;
+            }
+        }
+
+        if (isset($cur_blk['continuable'])
+            and $this->isBlockCompletable($cur_blk['type'])
+        ) {
+            $cur_blk = $this->{'block' . $cur_blk['type'] . 'Complete'}($cur_blk);
+        }
+
+        $blocks[] = $cur_blk;
+
+        unset($blocks[0]);
+
+        $markup = '';
+
+        foreach ($blocks as $block) {
+            if (isset($block['hidden'])) {
+                continue;
+            }
+
+            $markup .= "\n";
+            $markup .= isset($block['markup']) ? $block['markup']
+                                               : $this->element($block['element']);
+        }
+
+        $markup .= "\n";
+
+        return $markup;
+    }
+
+    protected function unmarkedText($text)
+    {
+        if ($this->breaksEnabled) {
+            $text = preg_replace('/[ ]*\n/', "<br />\n", $text);
+        } else {
+            $text = str_replace(" \n", "\n", $text);
+        }
+
+        return $text;
     }
 
     protected function inlineMention($excerpt)
