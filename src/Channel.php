@@ -276,17 +276,13 @@ class Channel
         $s->execute();
     }
 
-    public function updateMessageEmbedAttachments(
-        int $msg, ?int $embed_group, ?int $attachment_group
-    ) {
+    public function updateMessageEmbed(int $msg, ?int $embed_group) {
         $s = $this->db->prepare("
             UPDATE `{$this->channel}` SET
-                attachment_group = :attachment_group,
                 embed_group = :embed_group
             WHERE id = :id
             ");
         $s->bindValue(':id', $msg);
-        $s->bindValue(':attachment_group', $attachment_group);
         $s->bindValue(':embed_group', $embed_group);
 
         $s->execute();

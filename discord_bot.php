@@ -296,14 +296,6 @@ class Bot
             return;
         }
 
-        $attachments = [];
-        if (isset($msg->attachments)) {
-            foreach ($msg->attachments as $a) {
-                $asset = $this->am->downloadAsset($a->url);
-                array_push($attachments, $asset);
-            }
-        }
-
         $embeds = [];
         if (isset($msg->embeds)) {
             foreach ($msg->embeds as $e) {
@@ -311,10 +303,9 @@ class Bot
             }
         }
 
-        $ch->updateMessageEmbedAttachments(
+        $ch->updateMessageEmbed(
             $msg->id,
             $this->ctx->insertEmbedGroup($embeds),
-            $this->ctx->insertAttachmentGroup($attachments)
         );
     }
 
