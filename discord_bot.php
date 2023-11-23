@@ -185,7 +185,7 @@ class Bot
         }
 
         if ($e->type == 'link' || $e->type == 'rich') {
-            $icon_url = $e->thumbnail?->url;
+            $icon_url = $e?->thumbnail?->url;
         } else {
             $icon_url = null;
         }
